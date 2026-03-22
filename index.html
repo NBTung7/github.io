@@ -3,19 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>极速结算</title>
+    <title>高速费分段结算</title>
     <style>
         body { font-family: -apple-system, sans-serif; background: #f4f7f9; padding: 15px; color: #333; margin: 0; }
-        
-        /* 左上角隐蔽勾选框 */
-        .driver-secret { position: absolute; top: 10px; left: 10px; z-index: 100; }
-        .driver-secret input { width: 20px; height: 20px; cursor: pointer; opacity: 0.3; } /* 略显透明，更加隐蔽 */
-
-        .card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-width: 450px; margin: 20px auto; position: relative; }
+        .card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-width: 450px; margin: 20px auto; }
         h2 { text-align: center; margin-top: 0; color: #007AFF; font-size: 18px; }
         
         .section-title { font-size: 13px; font-weight: bold; color: #999; margin: 15px 0 8px 0; border-left: 3px solid #007AFF; padding-left: 8px; }
-
         input[type="number"] { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; font-size: 16px; background: #fafafa; margin-bottom: 10px; outline: none; }
         
         .btn-group { display: flex; gap: 8px; margin-bottom: 5px; }
@@ -27,42 +21,44 @@
         .res-item:last-child { border-bottom: none; }
         .res-item b { color: #007AFF; }
         .total-info { font-size: 12px; color: #888; margin-top: 10px; text-align: center; }
+        
+        .reset-link { display: block; text-align: center; margin-top: 15px; font-size: 13px; color: #999; text-decoration: none; }
     </style>
 </head>
 <body>
 
-<div class="driver-secret">
-    <input type="checkbox" id="driverToggle" onchange="calc()">
-</div>
-
 <div class="card">
-    <h2>🚗 结算助手</h2>
+    <h2>🚗 乘客分摊计算</h2>
     
-    <div class="section-title">高速总里程 (km)</div>
-    <input type="number" id="totalDist" placeholder="输入总公里数" oninput="calc()">
+    <div class="section-title">全程总里程 (km)</div>
+    <input type="number" id="totalDist" placeholder="输入高速总里程" oninput="calc()">
 
-    <div class="section-title">费率</div>
+    <div class="section-title">费率标准</div>
     <div class="btn-group">
-        <div class="option-btn active" id="r05" onclick="setRate(0.5)">0.5</div>
-        <div class="option-btn" id="r06" onclick="setRate(0.6)">0.6</div>
+        <div class="option-btn active" id="r05" onclick="setRate(0.5)">0.5 元/km</div>
+        <div class="option-btn" id="r06" onclick="setRate(0.6)">0.6 元/km</div>
     </div>
 
-    <div class="section-title">乘客人数</div>
+    <div class="section-title">乘车人数</div>
     <div class="btn-group">
         <div class="option-btn" id="p3" onclick="setPax(3)">3 人</div>
         <div class="option-btn active" id="p4" onclick="setPax(4)">4 人</div>
     </div>
 
-    <div class="section-title">各下车点里程</div>
-    <input type="number" id="d1" placeholder="乘客1" oninput="calc()">
-    <input type="number" id="d2" placeholder="乘客2" oninput="calc()">
-    <input type="number" id="d3" placeholder="乘客3" oninput="calc()">
-    <input type="number" id="d4" placeholder="乘客4" oninput="calc()">
+    <div class="section-title">各乘客下车里程 (km)</div>
+    <input type="number" id="d1" placeholder="乘客1 下车点" oninput="calc()">
+    <input type="number" id="d2" placeholder="乘客2 下车点" oninput="calc()">
+    <input type="number" id="d3" placeholder="乘客3 下车点" oninput="calc()">
+    <input type="number" id="d4" placeholder="乘客4 下车点" oninput="calc()">
 
     <div id="result" class="result-box">
-        <div id="resList"></div>
+        <div id="resList">
+            <div style="text-align:center;color:#999;padding:10px;">请输入数据</div>
+        </div>
         <div class="total-info" id="summary"></div>
     </div>
+    
+    <a href="javascript:void(0)" class="reset-link" onclick="location.reload()">清空重新输入</a>
 </div>
 
 <script>
@@ -85,31 +81,33 @@ function setPax(p) {
 }
 
 function calc() {
-    const totalDist = parseFloat(document.getElementById('totalDist').value);
-    const includeDriver = document.getElementById('driverToggle').checked;
+    const totalDistInput = document.getElementById('totalDist').value;
+    const totalDist = parseFloat(totalDistInput);
     const resList = document.getElementById('resList');
     const summary = document.getElementById('summary');
 
     if (!totalDist || totalDist <= 0) {
-        resList.innerHTML = '<div style="text-align:center;color:#999;padding:10px;">等待里程...</div>';
+        resList.innerHTML = '<div style="text-align:center;color:#999;padding:10px;">等待总里程数据...</div>';
+        summary.innerHTML = "";
         return;
     }
 
     // 基础数据准备
     let paxes = [];
     for(let i=1; i<=currentPax; i++) {
-        let d = parseFloat(document.getElementById('d'+i).value) || 0;
+        let dVal = document.getElementById('d'+i).value;
+        let d = parseFloat(dVal) || 0;
         paxes.push({ id: i, dist: Math.min(d, totalDist) });
     }
 
-    // 分段平摊逻辑
+    // 分段平摊核心逻辑
     let sorted = [...paxes].sort((a,b) => a.dist - b.dist);
     let results = {};
     paxes.forEach(p => results[p.id] = 0);
 
     let prevDist = 0;
-    // 关键分母：乘客数 + (如果是勾选了司机则+1)
-    let currentInCar = currentPax + (includeDriver ? 1 : 0);
+    // 初始车上人数即为选中的乘客数
+    let currentInCar = currentPax;
 
     for (let i = 0; i < sorted.length; i++) {
         let segLen = sorted[i].dist - prevDist;
@@ -117,14 +115,14 @@ function calc() {
             let segCost = segLen * currentRate;
             let perHead = segCost / currentInCar;
             
-            // 为所有还在车上的乘客累加
+            // 为所有还没下车的乘客叠加费用
             sorted.slice(i).forEach(p => results[p.id] += perHead);
         }
         prevDist = sorted[i].dist;
-        currentInCar--; // 下车一个乘客
+        currentInCar--; // 下车一位乘客，下一段平摊人数减1
     }
 
-    // 显示
+    // 渲染结果
     resList.innerHTML = "";
     paxes.forEach(p => {
         resList.innerHTML += `
@@ -134,7 +132,7 @@ function calc() {
             </div>`;
     });
 
-    summary.innerHTML = `总费: ${(totalDist * currentRate).toFixed(2)} 元 | 司机平摊: ${includeDriver ? '开' : '关'}`;
+    summary.innerHTML = `费率: ${currentRate} | 总费: <b>${(totalDist * currentRate).toFixed(2)}</b> 元`;
 }
 </script>
 
