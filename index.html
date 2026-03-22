@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>高速费分段结算</title>
+    <title>高速费综合结算</title>
     <style>
         body { font-family: -apple-system, sans-serif; background: #f4f7f9; padding: 15px; color: #333; margin: 0; }
         .card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-width: 450px; margin: 20px auto; }
@@ -14,7 +14,10 @@
         
         .btn-group { display: flex; gap: 8px; margin-bottom: 5px; }
         .option-btn { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 10px; text-align: center; cursor: pointer; background: white; font-weight: bold; font-size: 14px; }
-        .option-btn.active { border-color: #007AFF; background: #eef6ff; color: #007AFF; }
+        .option-btn.active { border-color: #007AFF; background: #eef6ff; color: #007AFF; box-shadow: 0 2px 5px rgba(0,122,255,0.1); }
+
+        /* 特殊模式颜色 */
+        .avg-mode.active { border-color: #28a745; background: #e9f7ef; color: #28a745; }
 
         .result-box { margin-top: 15px; padding: 12px; background: #f0f9ff; border-radius: 12px; border: 1px solid #bae1ff; }
         .res-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px dashed #cce5ff; font-size: 16px; }
@@ -28,15 +31,21 @@
 <body>
 
 <div class="card">
-    <h2>🚗 乘客分摊计算</h2>
+    <h2>🚗 极速结算助手</h2>
     
     <div class="section-title">全程总里程 (km)</div>
     <input type="number" id="totalDist" placeholder="输入高速总里程" oninput="calc()">
 
+    <div class="section-title">分摊模式</div>
+    <div class="btn-group">
+        <div class="option-btn active" id="mSeg" onclick="setMode('seg')">分段 (公平)</div>
+        <div class="option-btn avg-mode" id="mAvg" onclick="setMode('avg')">平均 (大锅饭)</div>
+    </div>
+
     <div class="section-title">费率标准</div>
     <div class="btn-group">
-        <div class="option-btn active" id="r05" onclick="setRate(0.5)">0.5 元/km</div>
-        <div class="option-btn" id="r06" onclick="setRate(0.6)">0.6 元/km</div>
+        <div class="option-btn active" id="r05" onclick="setRate(0.5)">0.5</div>
+        <div class="option-btn" id="r06" onclick="setRate(0.6)">0.6</div>
     </div>
 
     <div class="section-title">乘车人数</div>
@@ -45,25 +54,36 @@
         <div class="option-btn active" id="p4" onclick="setPax(4)">4 人</div>
     </div>
 
-    <div class="section-title">各乘客下车里程 (km)</div>
-    <input type="number" id="d1" placeholder="乘客1 下车点" oninput="calc()">
-    <input type="number" id="d2" placeholder="乘客2 下车点" oninput="calc()">
-    <input type="number" id="d3" placeholder="乘客3 下车点" oninput="calc()">
-    <input type="number" id="d4" placeholder="乘客4 下车点" oninput="calc()">
+    <div id="distInputs">
+        <div class="section-title">各乘客下车点 (km)</div>
+        <input type="number" id="d1" placeholder="乘客1" oninput="calc()">
+        <input type="number" id="d2" placeholder="乘客2" oninput="calc()">
+        <input type="number" id="d3" placeholder="乘客3" oninput="calc()">
+        <input type="number" id="d4" placeholder="乘客4" oninput="calc()">
+    </div>
 
     <div id="result" class="result-box">
         <div id="resList">
-            <div style="text-align:center;color:#999;padding:10px;">请输入数据</div>
+            <div style="text-align:center;color:#999;padding:10px;">等待数据...</div>
         </div>
         <div class="total-info" id="summary"></div>
     </div>
     
-    <a href="javascript:void(0)" class="reset-link" onclick="location.reload()">清空重新输入</a>
+    <a href="javascript:void(0)" class="reset-link" onclick="location.reload()">清空数据</a>
 </div>
 
 <script>
 let currentRate = 0.5;
 let currentPax = 4;
+let splitMode = 'seg'; // seg: 分段, avg: 平均
+
+function setMode(m) {
+    splitMode = m;
+    document.getElementById('mSeg').classList.toggle('active', m === 'seg');
+    document.getElementById('mAvg').classList.toggle('active', m === 'avg');
+    // 平均模式下，隐藏里程输入可能更清爽，但保留也可以，这里我们保留
+    calc();
+}
 
 function setRate(r) {
     currentRate = r;
@@ -87,52 +107,54 @@ function calc() {
     const summary = document.getElementById('summary');
 
     if (!totalDist || totalDist <= 0) {
-        resList.innerHTML = '<div style="text-align:center;color:#999;padding:10px;">等待总里程数据...</div>';
-        summary.innerHTML = "";
+        resList.innerHTML = '<div style="text-align:center;color:#999;padding:10px;">请输入总里程</div>';
         return;
     }
 
-    // 基础数据准备
-    let paxes = [];
-    for(let i=1; i<=currentPax; i++) {
-        let dVal = document.getElementById('d'+i).value;
-        let d = parseFloat(dVal) || 0;
-        paxes.push({ id: i, dist: Math.min(d, totalDist) });
-    }
-
-    // 分段平摊核心逻辑
-    let sorted = [...paxes].sort((a,b) => a.dist - b.dist);
+    const totalFee = totalDist * currentRate;
     let results = {};
-    paxes.forEach(p => results[p.id] = 0);
 
-    let prevDist = 0;
-    // 初始车上人数即为选中的乘客数
-    let currentInCar = currentPax;
-
-    for (let i = 0; i < sorted.length; i++) {
-        let segLen = sorted[i].dist - prevDist;
-        if (segLen > 0) {
-            let segCost = segLen * currentRate;
-            let perHead = segCost / currentInCar;
-            
-            // 为所有还没下车的乘客叠加费用
-            sorted.slice(i).forEach(p => results[p.id] += perHead);
+    if (splitMode === 'avg') {
+        // --- 平均模式逻辑 ---
+        const perPerson = totalFee / currentPax;
+        for(let i=1; i<=currentPax; i++) {
+            results[i] = perPerson;
         }
-        prevDist = sorted[i].dist;
-        currentInCar--; // 下车一位乘客，下一段平摊人数减1
+    } else {
+        // --- 分段模式逻辑 (保持原样) ---
+        let paxes = [];
+        for(let i=1; i<=currentPax; i++) {
+            let d = parseFloat(document.getElementById('d'+i).value) || 0;
+            paxes.push({ id: i, dist: Math.min(d, totalDist) });
+        }
+        let sorted = [...paxes].sort((a,b) => a.dist - b.dist);
+        paxes.forEach(p => results[p.id] = 0);
+        let prevDist = 0;
+        let currentInCar = currentPax;
+        for (let i = 0; i < sorted.length; i++) {
+            let segLen = sorted[i].dist - prevDist;
+            if (segLen > 0) {
+                let segCost = segLen * currentRate;
+                let perHead = segCost / currentInCar;
+                sorted.slice(i).forEach(p => results[p.id] += perHead);
+            }
+            prevDist = sorted[i].dist;
+            currentInCar--;
+        }
     }
 
     // 渲染结果
     resList.innerHTML = "";
-    paxes.forEach(p => {
+    for(let i=1; i<=currentPax; i++) {
+        let label = splitMode === 'avg' ? `乘客 ${i}` : `乘客 ${i} (${Math.min(parseFloat(document.getElementById('d'+i).value)||0, totalDist)}km)`;
         resList.innerHTML += `
             <div class="res-item">
-                <span>乘客 ${p.id} (${p.dist}km)</span>
-                <b>${results[p.id].toFixed(2)} 元</b>
+                <span>${label}</span>
+                <b>${(results[i] || 0).toFixed(2)} 元</b>
             </div>`;
-    });
+    }
 
-    summary.innerHTML = `费率: ${currentRate} | 总费: <b>${(totalDist * currentRate).toFixed(2)}</b> 元`;
+    summary.innerHTML = `模式: ${splitMode==='seg'?'分段':'平均'} | 总费: <b>${totalFee.toFixed(2)}</b> 元`;
 }
 </script>
 
