@@ -3,91 +3,97 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>双地图极速结算系统 v23.0</title>
+    <title>高德极速结算系统 v26.0</title>
     
     <script type="text/javascript">
         window._AMapSecurityConfig = { securityJsCode: 'b559741e31149204588581114b731b79', }; 
     </script>
     <script type="text/javascript" src="https://webapi.amap.com/maps?v=2.0&key=d40b46f59c6ac01013fb25c663857fff&plugin=AMap.Driving"></script>
-    <script type="text/javascript" src="https://api.map.baidu.com/api?v=3.0&ak=LPi70Nil8yxoR7RqrBL8ZDVFXJvwP7U7"></script>
 
     <style>
-        :root { --amap-blue: #007AFF; --baidu-red: #E60012; --ios-bg: #f2f2f7; }
+        :root { --amap-blue: #007AFF; --ios-bg: #f2f2f7; --danger: #ff3b30; }
         body { font-family: -apple-system, sans-serif; background: var(--ios-bg); margin: 0; padding: 10px; -webkit-tap-highlight-color: transparent; }
         .container { max-width: 600px; margin: auto; }
 
-        .map-grid { display: flex; gap: 8px; margin-bottom: 8px; }
-        .map-wrap { flex: 1; height: 180px; background: #fff; border-radius: 15px; position: relative; overflow: hidden; border: 1px solid #d1d1d6; }
-        .map-tag { position: absolute; top: 6px; left: 6px; z-index: 10; background: rgba(255,255,255,0.85); padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; border: 1px solid #ddd; }
-        #amap-box, #baidu-box { width: 100%; height: 100%; }
+        /* 地图区：单图显示，视野更广 */
+        .map-wrap { width: 100%; height: 220px; background: #fff; border-radius: 18px; position: relative; overflow: hidden; border: 1px solid #d1d1d6; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 12px; }
+        .map-tag { position: absolute; top: 10px; left: 10px; z-index: 10; background: rgba(255,255,255,0.9); padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: bold; border: 1px solid #ccc; color: var(--amap-blue); }
+        #amap-box { width: 100%; height: 100%; }
 
-        .ctrl-row { display: flex; gap: 8px; margin-bottom: 12px; }
-        .ctrl-btn { flex: 1; padding: 12px; background: white; border: 1px solid #d1d1d6; border-radius: 12px; font-size: 14px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
-        .btn-reset { color: #ff3b30; border-color: #ff3b30; }
+        /* 功能键 */
+        .ctrl-row { display: flex; gap: 10px; margin-bottom: 15px; }
+        .ctrl-btn { flex: 1; padding: 14px; background: white; border: 1px solid #d1d1d6; border-radius: 14px; font-size: 15px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; }
+        .ctrl-btn:active { background: #e5e5ea; transform: scale(0.98); }
+        .btn-reset { color: var(--danger); border-color: var(--danger); }
 
-        .panel { background: white; border-radius: 20px; padding: 18px; box-shadow: 0 8px 25px rgba(0,0,0,0.08); }
-        .input-group input { width: 100%; padding: 14px; border: 1px solid #d1d1d6; border-radius: 12px; font-size: 16px; box-sizing: border-box; outline: none; margin-bottom: 10px; background: #fafafa; }
+        /* 面板 */
+        .panel { background: white; border-radius: 24px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); }
+        .input-group input { width: 100%; padding: 15px; border: 1px solid #e5e5ea; border-radius: 14px; font-size: 16px; box-sizing: border-box; outline: none; margin-bottom: 12px; background: #f9f9fb; transition: 0.3s; }
+        .input-group input:focus { background: #fff; border-color: var(--amap-blue); box-shadow: 0 0 0 3px rgba(0,122,255,0.1); }
         
-        .engine-row { display: flex; gap: 10px; margin-bottom: 15px; }
-        .btn-eng { flex: 1; padding: 15px; border: none; border-radius: 12px; color: white; font-weight: bold; font-size: 15px; cursor: pointer; opacity: 0.6; }
-        .btn-eng.active { opacity: 1; transform: scale(1.03); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
-        .bg-a { background: var(--amap-blue); }
-        .bg-b { background: var(--baidu-red); }
+        /* 规划按钮 */
+        .btn-run { width: 100%; padding: 16px; border: none; border-radius: 14px; color: white; font-weight: bold; font-size: 17px; background: var(--amap-blue); cursor: pointer; margin-bottom: 18px; box-shadow: 0 4px 15px rgba(0,122,255,0.3); }
+        .btn-run:active { transform: scale(0.97); opacity: 0.9; }
 
-        .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 15px; text-align: center; }
-        .stat-box { background: #f8f8fa; padding: 10px; border-radius: 12px; border: 1px solid #efeff4; }
-        .stat-box span { font-size: 10px; color: #8e8e93; display: block; }
-        .stat-box b { font-size: 16px; }
+        /* 数据看板 */
+        .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 18px; text-align: center; }
+        .stat-box { background: #f8f8fa; padding: 12px; border-radius: 14px; border: 1px solid #efeff4; }
+        .stat-box span { font-size: 11px; color: #8e8e93; display: block; margin-bottom: 4px; }
+        .stat-box b { font-size: 18px; color: #1c1c1e; }
 
-        .price-tip { font-size: 12px; text-align: center; color: #ff9500; margin-bottom: 12px; font-weight: bold; }
-        .opt-row { display: flex; gap: 6px; margin-bottom: 8px; }
-        .opt-btn { flex: 1; padding: 12px; border: 1px solid #d1d1d6; border-radius: 10px; text-align: center; font-size: 14px; background: white; }
-        .opt-btn.active { border-color: var(--amap-blue); background: #f2f8ff; color: var(--amap-blue); font-weight: bold; }
+        .price-tip { font-size: 13px; text-align: center; color: #ff9500; margin-bottom: 15px; font-weight: 600; padding: 8px; background: #fff9f0; border-radius: 8px; }
         
-        #pax-inputs input { margin-bottom: 8px; border-color: #eee; font-size: 14px; }
-        .res-panel { margin-top: 15px; padding: 15px; background: #f0f9ff; border-radius: 15px; border: 1px solid #d0e7ff; min-height: 40px; }
-        .res-line { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px dashed #c0d9f0; font-size: 17px; }
+        /* 选项按钮 */
+        .opt-row { display: flex; gap: 8px; margin-bottom: 10px; }
+        .opt-btn { flex: 1; padding: 12px; border: 1.5px solid #d1d1d6; border-radius: 12px; text-align: center; font-size: 14px; background: white; font-weight: 600; color: #48484a; }
+        .opt-btn.active { border-color: var(--amap-blue); background: #f2f8ff; color: var(--amap-blue); }
+        
+        #pax-inputs { margin-top: 15px; }
+        #pax-inputs input { margin-bottom: 10px; border-color: #eee; font-size: 15px; background: #fff; }
+
+        /* 结果区域 */
+        .res-panel { margin-top: 20px; padding: 18px; background: #f0f9ff; border-radius: 18px; border: 1px solid #d0e7ff; }
+        .res-line { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px dashed #c0d9f0; font-size: 18px; color: #003e7e; }
+        .res-line:last-child { border-bottom: none; }
+        .res-line b { color: #007AFF; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="map-grid">
-        <div class="map-wrap"><div class="map-tag">高德 A</div><div id="amap-box"></div></div>
-        <div class="map-wrap"><div class="map-tag">百度 B</div><div id="baidu-box"></div></div>
+    <div class="map-wrap">
+        <div class="map-tag">高德地图 实时巡航</div>
+        <div id="amap-box"></div>
     </div>
 
     <div class="ctrl-row">
-        <button class="ctrl-btn" onclick="recenterAll()">🎯 居中/锁定当前位置</button>
-        <button class="ctrl-btn btn-reset" onclick="globalReset()">🧹 清除全部数据</button>
+        <button class="ctrl-btn" onclick="recenter()">🎯 居中回归</button>
+        <button class="ctrl-btn btn-reset" onclick="globalReset()">🧹 全部清空</button>
     </div>
 
     <div class="panel">
         <div class="input-group">
-            <input type="text" id="startInput" placeholder="📍 输入起点">
-            <input type="text" id="endInput" placeholder="🏁 输入终点">
+            <input type="text" id="sInput" placeholder="📍 输入起点">
+            <input type="text" id="eInput" placeholder="🏁 输入终点">
         </div>
 
-        <div class="engine-row">
-            <button id="btnA" class="btn-eng bg-a" onclick="runA()">高德方案</button>
-            <button id="btnB" class="btn-eng bg-b" onclick="runB()">百度方案</button>
-        </div>
+        <button class="btn-run" onclick="runRoute()">开始规划路径</button>
 
         <div class="stats">
-            <div class="stat-box"><span>里程(km)</span><b id="val-dist">0.0</b></div>
-            <div class="stat-box"><span>收费段</span><b id="val-toll">0.0</b></div>
-            <div class="stat-box"><span>预估价</span><b id="val-price" style="color:#ff3b30">0</b></div>
+            <div class="stat-box"><span>里程(km)</span><b id="v-dist">0.0</b></div>
+            <div class="stat-box"><span>收费段</span><b id="v-toll">0.0</b></div>
+            <div class="stat-box"><span>预估价</span><b id="v-price" style="color:var(--danger)">0</b></div>
         </div>
 
-        <div id="unit-info" class="price-tip">等待路线预估...</div>
+        <div id="unit-info" class="price-tip">请输入路径信息</div>
 
         <div class="opt-row">
-            <div class="opt-btn" id="p3" onclick="changePax(3)">3人</div>
-            <div class="opt-btn active" id="p4" onclick="changePax(4)">4人</div>
+            <div class="opt-btn" id="p3" onclick="chPax(3)">3人</div>
+            <div class="opt-btn active" id="p4" onclick="chPax(4)">4人</div>
         </div>
         <div class="opt-row">
-            <div class="opt-btn active" id="mS" onclick="changeMode('seg')">分段计费</div>
-            <div class="opt-btn" id="mA" onclick="changeMode('avg')">平均计费</div>
+            <div class="opt-btn active" id="mS" onclick="chMode('seg')">分段计费</div>
+            <div class="opt-btn" id="mA" onclick="chMode('avg')">平均平摊</div>
         </div>
 
         <div id="pax-inputs">
@@ -98,123 +104,99 @@
         </div>
 
         <div class="res-panel">
-            <div id="final-res" style="text-align:center; color:#999; font-size:14px;">计算结果展示</div>
+            <div id="final-res" style="text-align:center; color:#8e8e93; font-size:15px;">等待计算结果...</div>
         </div>
     </div>
 </div>
 
 <script>
-let aMap, bMap, aDrive, bDrive, aMarker, bMarker;
-let myLng, myLat, correctedBPoint; 
-let totalKM = 0, totalPrice = 0, paxCount = 4, modeType = 'seg';
+let aMap, aDrive, aMarker;
+let myLng, myLat, totalKM = 0, totalPrice = 0, paxCount = 4, modeType = 'seg';
 
 function init() {
-    // 1. 高德初始化
-    aMap = new AMap.Map('amap-box', { zoom: 15 });
-    aDrive = new AMap.Driving({ map: aMap, policy: AMap.DrivingPolicy.LEAST_DISTANCE });
-    aMarker = new AMap.Marker({ map: aMap });
-
-    // 2. 百度初始化
-    bMap = new BMap.Map("baidu-box");
-    bMap.centerAndZoom(new BMap.Point(113.27, 23.13), 15);
-    bMarker = new BMap.Marker(new BMap.Point(113.27, 23.13)); 
-    bMap.addOverlay(bMarker);
-
-    // 【关键修复】预先定义百度规划器实例，提高响应速度
-    bDrive = new BMap.DrivingRoute(bMap, { 
-        renderOptions: {map: bMap, autoViewport: true},
-        onSearchComplete: function(res) {
-            if (bDrive.getStatus() == BMAP_STATUS_SUCCESS){
-                const plan = res.getPlan(0);
-                const d = (plan.getDistance(false)/1000).toFixed(1);
-                updateUI(d, "N/A", (d * 2.4).toFixed(1));
-            } else {
-                alert("百度规划失败，请检查地点名称");
-            }
-        }
+    // 初始化高德地图
+    aMap = new AMap.Map('amap-box', { zoom: 15, viewMode: '3D' });
+    aDrive = new AMap.Driving({ 
+        map: aMap, 
+        panel: false, 
+        policy: AMap.DrivingPolicy.LEAST_DISTANCE 
     });
-    
-    // GPS 纠偏同步
+    aMarker = new AMap.Marker({ map: aMap, icon: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_b.png' });
+
+    // GPS 持续定位
     if (navigator.geolocation) {
         navigator.geolocation.watchPosition(pos => {
-            myLng = pos.coords.longitude; myLat = pos.coords.latitude;
+            myLng = pos.coords.longitude; 
+            myLat = pos.coords.latitude;
             aMarker.setPosition([myLng, myLat]);
-            const convertor = new BMap.Convertor();
-            convertor.translate([new BMap.Point(myLng, myLat)], 1, 5, (data) => {
-                if(data.status === 0) {
-                    correctedBPoint = data.points[0];
-                    bMarker.setPosition(correctedBPoint);
-                }
-            });
         }, null, { enableHighAccuracy: true });
     }
 }
 
-function recenterAll() {
-    if(!myLng) return alert("等待定位...");
+// 🎯 回到当前位置
+function recenter() {
+    if(!myLng) return alert("定位获取中...");
     aMap.setCenter([myLng, myLat]);
-    bMap.panTo(correctedBPoint || new BMap.Point(myLng, myLat));
+    aMap.setZoom(16);
 }
 
+// 🧹 清空所有数据
 function globalReset() {
-    document.getElementById('startInput').value = "";
-    document.getElementById('endInput').value = "";
+    document.getElementById('sInput').value = "";
+    document.getElementById('eInput').value = "";
     for(let i=1; i<=4; i++) document.getElementById('v'+i).value = "";
+    
     if(aDrive) aDrive.clear();
-    bMap.clearOverlays();
-    bMap.addOverlay(bMarker);
+    
     totalKM = 0; totalPrice = 0;
-    document.getElementById('val-dist').innerText = "0.0";
-    document.getElementById('val-toll').innerText = "0.0";
-    document.getElementById('val-price').innerText = "0";
+    document.getElementById('v-dist').innerText = "0.0";
+    document.getElementById('v-toll').innerText = "0.0";
+    document.getElementById('v-price').innerText = "0";
     document.getElementById('unit-info').innerText = "数据已重置";
-    document.getElementById('final-res').innerHTML = "";
-    document.getElementById('btnA').classList.remove('active');
-    document.getElementById('btnB').classList.remove('active');
-    recenterAll();
+    document.getElementById('final-res').innerHTML = "等待输入";
+    
+    recenter();
 }
 
-function runA() {
-    const s = document.getElementById('startInput').value, e = document.getElementById('endInput').value;
-    if(!s || !e) return;
-    document.getElementById('btnA').classList.add('active');
-    document.getElementById('btnB').classList.remove('active');
+// 🚀 执行规划
+function runRoute() {
+    const s = document.getElementById('sInput').value;
+    const e = document.getElementById('eInput').value;
+    if(!s || !e) return alert("请输入完整起终点");
+
+    document.getElementById('unit-info').innerText = "⏳ 正在计算最精准路径...";
+
     aDrive.search([{keyword:s}, {keyword:e}], (status, res) => {
         if(status === 'complete') {
             const r = res.routes[0];
-            const p = r.tolls > 0 ? r.tolls : (r.distance/1000 * 2.4).toFixed(1);
-            updateUI((r.distance/1000).toFixed(1), (r.toll_distance/1000).toFixed(1), p);
+            // 费用逻辑：有过路费显示过路费，否则按 2.4/km 预估
+            const dist = (r.distance/1000).toFixed(1);
+            const fee = r.tolls > 0 ? r.tolls : (dist * 2.4).toFixed(1);
+            
+            totalKM = parseFloat(dist);
+            totalPrice = parseFloat(fee);
+            
+            document.getElementById('v-dist').innerText = dist;
+            document.getElementById('v-toll').innerText = (r.toll_distance/1000).toFixed(1);
+            document.getElementById('v-price').innerText = fee;
+            document.getElementById('unit-info').innerText = `折算单价：${(totalPrice/totalKM).toFixed(2)} 元/km`;
+            
+            calculate();
+        } else {
+            alert("路径规划失败，请检查地点是否准确");
         }
     });
 }
 
-function runB() {
-    const s = document.getElementById('startInput').value, e = document.getElementById('endInput').value;
-    if(!s || !e) return;
-    document.getElementById('btnB').classList.add('active');
-    document.getElementById('btnA').classList.remove('active');
-    document.getElementById('unit-info').innerText = "⏳ 百度正在计算路线...";
-    
-    // 使用预定义的实例直接搜索
-    bDrive.search(s, e);
-}
-
-function updateUI(d, td, tf) {
-    totalKM = parseFloat(d); totalPrice = parseFloat(tf);
-    document.getElementById('val-dist').innerText = d;
-    document.getElementById('val-toll').innerText = td;
-    document.getElementById('val-price').innerText = tf;
-    document.getElementById('unit-info').innerText = `计费单价：约 ${(totalPrice/totalKM).toFixed(2)} 元/km`;
-    calculate();
-}
-
-function changePax(n) { paxCount = n; document.getElementById('p3').className=n==3?'opt-btn active':'opt-btn'; document.getElementById('p4').className=n==4?'opt-btn active':'opt-btn'; document.getElementById('v4').style.display=n==3?'none':'block'; calculate(); }
-function changeMode(m) { modeType = m; document.getElementById('mS').className=m=='seg'?'opt-btn active':'opt-btn'; document.getElementById('mA').className=m=='avg'?'opt-btn active':'opt-btn'; document.getElementById('pax-inputs').style.display=m=='avg'?'none':'block'; calculate(); }
+// 结算逻辑
+function chPax(n) { paxCount = n; document.getElementById('p3').className=n==3?'opt-btn active':'opt-btn'; document.getElementById('p4').className=n==4?'opt-btn active':'opt-btn'; document.getElementById('v4').style.display=n==3?'none':'block'; calculate(); }
+function chMode(m) { modeType = m; document.getElementById('mS').className=m=='seg'?'opt-btn active':'opt-btn'; document.getElementById('mA').className=m=='avg'?'opt-btn active':'opt-btn'; document.getElementById('pax-inputs').style.display=m=='avg'?'none':'block'; calculate(); }
 
 function calculate() {
     if(!totalKM || !totalPrice) return;
     const rate = totalPrice / totalKM;
     let html = "";
+
     if(modeType === 'avg') {
         const per = totalPrice / paxCount;
         for(let i=1; i<=paxCount; i++) html += `<div class="res-line"><span>乘客 ${i}</span><b>${per.toFixed(2)} 元</b></div>`;
@@ -236,7 +218,9 @@ function calculate() {
             last = sorted[i].dist;
             count--;
         }
-        items.forEach(x => { html += `<div class="res-line"><span>乘客 ${x.id} (${x.dist}km)</span><b>${resMap[x.id].toFixed(2)} 元</b></div>`; });
+        items.forEach(x => { 
+            html += `<div class="res-line"><span>乘客 ${x.id} (${x.dist}km)</span><b>${resMap[x.id].toFixed(2)} 元</b></div>`; 
+        });
     }
     document.getElementById('final-res').innerHTML = html;
 }
