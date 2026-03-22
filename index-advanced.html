@@ -3,45 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Index Advanced</title>
-    <script>
-        // Function to save data to local storage
-        function saveData() {
-            const input = document.getElementById('dataInput').value;
-            if (input) {
-                localStorage.setItem('savedData', input);
-                alert('Data saved successfully!');
-            } else {
-                alert('Please enter some data to save.');
-            }
-        }
-
-        // Function to load data from local storage
-        function loadData() {
-            const savedData = localStorage.getItem('savedData');
-            const output = document.getElementById('output');
-            if (savedData) {
-                output.textContent = 'Saved Data: ' + savedData;
-            } else {
-                output.textContent = 'No data found.';
-            }
-        }
-
-        // Add error handling
-        window.onload = () => {
-            try {
-                loadData();
-            } catch (error) {
-                console.error('An error occurred while loading data:', error);
-                alert('Failed to load data.');
-            }
-        };
-    </script>
+    <title>Ride-Sharing Cost Calculator</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <h1>Enhanced Index Page</h1>
-    <input type="text" id="dataInput" placeholder="Enter some data" />
-    <button onclick="saveData()">Save Data</button>
-    <div id="output"></div>
+    <header>
+        <h1>Ride-Sharing Cost Calculator</h1>
+    </header>
+    <main>
+        <form id="costCalculator">
+            <label for="distance">Distance (miles):</label>
+            <input type="number" id="distance" required>
+            <label for="rate">Rate per mile:</label>
+            <input type="number" id="rate" required>
+            <button type="submit">Calculate Cost</button>
+        </form>
+        <div id="result"></div>
+    </main>
+    <script src="app.js"></script>
 </body>
 </html>
