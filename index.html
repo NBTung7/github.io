@@ -3,73 +3,71 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>高速费分段助手 v3.0</title>
+    <title>极速结算</title>
     <style>
-        body { font-family: -apple-system, sans-serif; background: #f4f7f9; padding: 15px; color: #333; }
-        .card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-width: 450px; margin: auto; }
-        h2 { text-align: center; margin-top: 0; color: #007AFF; font-size: 20px; }
+        body { font-family: -apple-system, sans-serif; background: #f4f7f9; padding: 15px; color: #333; margin: 0; }
         
-        .section-title { font-size: 14px; font-weight: bold; color: #888; margin: 18px 0 10px 0; display: flex; align-items: center; }
-        .section-title::after { content: ""; flex: 1; height: 1px; background: #eee; margin-left: 10px; }
+        /* 左上角隐蔽勾选框 */
+        .driver-secret { position: absolute; top: 10px; left: 10px; z-index: 100; }
+        .driver-secret input { width: 20px; height: 20px; cursor: pointer; opacity: 0.3; } /* 略显透明，更加隐蔽 */
 
-        input { width: 100%; padding: 14px; border: 1px solid #ddd; border-radius: 12px; box-sizing: border-box; font-size: 18px; background: #fafafa; margin-bottom: 10px; }
+        .card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-width: 450px; margin: 20px auto; position: relative; }
+        h2 { text-align: center; margin-top: 0; color: #007AFF; font-size: 18px; }
         
-        /* 按钮通用样式 */
-        .btn-group { display: flex; gap: 10px; margin-bottom: 5px; }
-        .option-btn { flex: 1; padding: 12px; border: 2px solid #ddd; border-radius: 12px; text-align: center; cursor: pointer; background: white; font-weight: bold; font-size: 15px; transition: all 0.2s; }
-        .option-btn.active { border-color: #007AFF; background: #eef6ff; color: #007AFF; box-shadow: 0 4px 8px rgba(0,122,255,0.1); }
+        .section-title { font-size: 13px; font-weight: bold; color: #999; margin: 15px 0 8px 0; border-left: 3px solid #007AFF; padding-left: 8px; }
 
-        /* 计算按钮 */
-        .calc-btn { width: 100%; padding: 18px; background: #007AFF; color: white; border: none; border-radius: 15px; font-size: 18px; font-weight: bold; margin-top: 25px; cursor: pointer; }
+        input[type="number"] { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; font-size: 16px; background: #fafafa; margin-bottom: 10px; outline: none; }
         
-        /* 结果展示 */
-        .result-box { margin-top: 20px; padding: 15px; background: #f0f9ff; border-radius: 15px; display: none; border: 1px solid #bae1ff; }
-        .res-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px dashed #cce5ff; font-size: 17px; }
+        .btn-group { display: flex; gap: 8px; margin-bottom: 5px; }
+        .option-btn { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 10px; text-align: center; cursor: pointer; background: white; font-weight: bold; font-size: 14px; }
+        .option-btn.active { border-color: #007AFF; background: #eef6ff; color: #007AFF; }
+
+        .result-box { margin-top: 15px; padding: 12px; background: #f0f9ff; border-radius: 12px; border: 1px solid #bae1ff; }
+        .res-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px dashed #cce5ff; font-size: 16px; }
         .res-item:last-child { border-bottom: none; }
         .res-item b { color: #007AFF; }
-        .total-info { font-size: 13px; color: #777; margin-top: 12px; text-align: center; line-height: 1.6; }
+        .total-info { font-size: 12px; color: #888; margin-top: 10px; text-align: center; }
     </style>
 </head>
 <body>
 
+<div class="driver-secret">
+    <input type="checkbox" id="driverToggle" onchange="calc()">
+</div>
+
 <div class="card">
-    <h2>🚗 高速费分段结算</h2>
+    <h2>🚗 结算助手</h2>
     
-    <div class="section-title">1. 输入总里程 (km)</div>
-    <input type="number" id="totalDist" placeholder="例如: 100" oninput="calc()">
+    <div class="section-title">高速总里程 (km)</div>
+    <input type="number" id="totalDist" placeholder="输入总公里数" oninput="calc()">
 
-    <div class="section-title">2. 选择费率 (元/km)</div>
+    <div class="section-title">费率</div>
     <div class="btn-group">
-        <div class="option-btn active" id="r05" onclick="setRate(0.5)">0.5 元/km</div>
-        <div class="option-btn" id="r06" onclick="setRate(0.6)">0.6 元/km</div>
+        <div class="option-btn active" id="r05" onclick="setRate(0.5)">0.5</div>
+        <div class="option-btn" id="r06" onclick="setRate(0.6)">0.6</div>
     </div>
 
-    <div class="section-title">3. 总分摊人数 (含司机?)</div>
+    <div class="section-title">乘客人数</div>
     <div class="btn-group">
-        <div class="option-btn" id="p3" onclick="setPeople(3)">3 人</div>
-        <div class="option-btn active" id="p4" onclick="setPeople(4)">4 人</div>
-        <div class="option-btn" id="p5" onclick="setPeople(5)">5 人</div>
+        <div class="option-btn" id="p3" onclick="setPax(3)">3 人</div>
+        <div class="option-btn active" id="p4" onclick="setPax(4)">4 人</div>
     </div>
 
-    <div id="passengerInputs">
-        <div class="section-title">4. 乘客下车点里程 (km)</div>
-        <input type="number" id="d1" placeholder="乘客1 下车点" oninput="calc()">
-        <input type="number" id="d2" placeholder="乘客2 下车点" oninput="calc()">
-        <input type="number" id="d3" placeholder="乘客3 下车点" oninput="calc()">
-        <input type="number" id="d4" placeholder="乘客4 下车点" oninput="calc()">
-    </div>
-
-    <button class="calc-btn" onclick="calc()">生成结算单</button>
+    <div class="section-title">各下车点里程</div>
+    <input type="number" id="d1" placeholder="乘客1" oninput="calc()">
+    <input type="number" id="d2" placeholder="乘客2" oninput="calc()">
+    <input type="number" id="d3" placeholder="乘客3" oninput="calc()">
+    <input type="number" id="d4" placeholder="乘客4" oninput="calc()">
 
     <div id="result" class="result-box">
         <div id="resList"></div>
-        <div class="total-info" id="summaryText"></div>
+        <div class="total-info" id="summary"></div>
     </div>
 </div>
 
 <script>
 let currentRate = 0.5;
-let startPeople = 4;
+let currentPax = 4;
 
 function setRate(r) {
     currentRate = r;
@@ -78,77 +76,65 @@ function setRate(r) {
     calc();
 }
 
-function setPeople(p) {
-    startPeople = p;
+function setPax(p) {
+    currentPax = p;
     document.getElementById('p3').classList.toggle('active', p === 3);
     document.getElementById('p4').classList.toggle('active', p === 4);
-    document.getElementById('p5').classList.toggle('active', p === 5);
-    
-    // 如果选3人，就隐藏第4个输入框，避免混淆
     document.getElementById('d4').style.display = (p === 3) ? 'none' : 'block';
     calc();
 }
 
 function calc() {
-    const totalDist = parseFloat(document.getElementById('totalDist').value) || 0;
-    if (totalDist <= 0) return;
+    const totalDist = parseFloat(document.getElementById('totalDist').value);
+    const includeDriver = document.getElementById('driverToggle').checked;
+    const resList = document.getElementById('resList');
+    const summary = document.getElementById('summary');
 
-    // 确定实际乘客数：如果是5人分(含司机)，则有4个乘客；如果是3人分(无司机)，则有3个乘客
-    // 逻辑：乘客数 = 如果startPeople里包含司机，则乘客是startPeople-1，否则就是startPeople
-    // 为了简单，我们直接根据按钮来定：
-    let activePaxCount = (startPeople === 5) ? 4 : startPeople;
-    
-    let dists = [];
-    for(let k=1; k<=4; k++) {
-        let val = parseFloat(document.getElementById('d'+k).value) || 0;
-        if (k <= activePaxCount) dists.push(val);
+    if (!totalDist || totalDist <= 0) {
+        resList.innerHTML = '<div style="text-align:center;color:#999;padding:10px;">等待里程...</div>';
+        return;
     }
-    
-    // 排序是为了逻辑正确，计算分段
-    let sortedDists = [...dists].sort((a, b) => a - b);
-    let sharesMap = {}; // 用里程作为key来存钱
-    dists.forEach(d => sharesMap[d] = 0);
+
+    // 基础数据准备
+    let paxes = [];
+    for(let i=1; i<=currentPax; i++) {
+        let d = parseFloat(document.getElementById('d'+i).value) || 0;
+        paxes.push({ id: i, dist: Math.min(d, totalDist) });
+    }
+
+    // 分段平摊逻辑
+    let sorted = [...paxes].sort((a,b) => a.dist - b.dist);
+    let results = {};
+    paxes.forEach(p => results[p.id] = 0);
 
     let prevDist = 0;
-    let currentPeopleInCar = startPeople;
+    // 关键分母：乘客数 + (如果是勾选了司机则+1)
+    let currentInCar = currentPax + (includeDriver ? 1 : 0);
 
-    for (let i = 0; i < sortedDists.length; i++) {
-        let currentPoint = Math.min(sortedDists[i], totalDist);
-        let segmentLen = currentPoint - prevDist;
-        
-        if (segmentLen > 0 && currentPeopleInCar > 0) {
-            let segmentCost = segmentLen * currentRate;
-            let perPerson = segmentCost / currentPeopleInCar;
+    for (let i = 0; i < sorted.length; i++) {
+        let segLen = sorted[i].dist - prevDist;
+        if (segLen > 0) {
+            let segCost = segLen * currentRate;
+            let perHead = segCost / currentInCar;
             
-            // 还没下车的所有人（包括司机份额）都摊这一段
-            // 我们只记录乘客的
-            for (let d in sharesMap) {
-                if (parseFloat(d) >= currentPoint) {
-                    sharesMap[d] += perPerson;
-                }
-            }
+            // 为所有还在车上的乘客累加
+            sorted.slice(i).forEach(p => results[p.id] += perHead);
         }
-        prevDist = currentPoint;
-        currentPeopleInCar--; // 下车一人
+        prevDist = sorted[i].dist;
+        currentInCar--; // 下车一个乘客
     }
 
-    // 渲染结果
-    const resList = document.getElementById('resList');
-    const resultBox = document.getElementById('result');
+    // 显示
     resList.innerHTML = "";
-    resultBox.style.display = 'block';
+    paxes.forEach(p => {
+        resList.innerHTML += `
+            <div class="res-item">
+                <span>乘客 ${p.id} (${p.dist}km)</span>
+                <b>${results[p.id].toFixed(2)} 元</b>
+            </div>`;
+    });
 
-    let idx = 1;
-    for (let k=1; k<=4; k++) {
-        if (k > activePaxCount) continue;
-        let dVal = parseFloat(document.getElementById('d'+k).value) || 0;
-        let money = sharesMap[dVal] || 0;
-        resList.innerHTML += `<div class="res-item"><span>乘客 ${idx} (${dVal}km)</span><b>${money.toFixed(2)} 元</b></div>`;
-        idx++;
-    }
-
-    document.getElementById('summaryText').innerHTML = 
-        `设置：${startPeople}人平摊 | 费率：${currentRate}元/km<br>总里程：${totalDist}km | 总费用：<b>${(totalDist * currentRate).toFixed(2)}</b> 元`;
+    summary.innerHTML = `总费: ${(totalDist * currentRate).toFixed(2)} 元 | 司机平摊: ${includeDriver ? '开' : '关'}`;
 }
 </script>
 
