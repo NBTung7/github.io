@@ -3,20 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>高速费综合结算</title>
+    <title>高速费极速结算</title>
     <style>
         body { font-family: -apple-system, sans-serif; background: #f4f7f9; padding: 15px; color: #333; margin: 0; }
         .card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-width: 450px; margin: 20px auto; }
         h2 { text-align: center; margin-top: 0; color: #007AFF; font-size: 18px; }
         
-        .section-title { font-size: 13px; font-weight: bold; color: #999; margin: 15px 0 8px 0; border-left: 3px solid #007AFF; padding-left: 8px; }
+        .section-title { font-size: 13px; font-weight: bold; color: #999; margin: 18px 0 10px 0; border-left: 3px solid #007AFF; padding-left: 8px; }
         input[type="number"] { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; font-size: 16px; background: #fafafa; margin-bottom: 10px; outline: none; }
         
         .btn-group { display: flex; gap: 8px; margin-bottom: 5px; }
         .option-btn { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 10px; text-align: center; cursor: pointer; background: white; font-weight: bold; font-size: 14px; }
-        .option-btn.active { border-color: #007AFF; background: #eef6ff; color: #007AFF; box-shadow: 0 2px 5px rgba(0,122,255,0.1); }
+        .option-btn.active { border-color: #007AFF; background: #eef6ff; color: #007AFF; }
 
-        /* 特殊模式颜色 */
+        /* 平均模式激活颜色 */
         .avg-mode.active { border-color: #28a745; background: #e9f7ef; color: #28a745; }
 
         .result-box { margin-top: 15px; padding: 12px; background: #f0f9ff; border-radius: 12px; border: 1px solid #bae1ff; }
@@ -31,16 +31,10 @@
 <body>
 
 <div class="card">
-    <h2>🚗 极速结算助手</h2>
+    <h2>🚗 结算助手</h2>
     
     <div class="section-title">全程总里程 (km)</div>
     <input type="number" id="totalDist" placeholder="输入高速总里程" oninput="calc()">
-
-    <div class="section-title">分摊模式</div>
-    <div class="btn-group">
-        <div class="option-btn active" id="mSeg" onclick="setMode('seg')">分段 (公平)</div>
-        <div class="option-btn avg-mode" id="mAvg" onclick="setMode('avg')">平均 (大锅饭)</div>
-    </div>
 
     <div class="section-title">费率标准</div>
     <div class="btn-group">
@@ -54,8 +48,14 @@
         <div class="option-btn active" id="p4" onclick="setPax(4)">4 人</div>
     </div>
 
-    <div id="distInputs">
-        <div class="section-title">各乘客下车点 (km)</div>
+    <div class="section-title">分摊模式</div>
+    <div class="btn-group">
+        <div class="option-btn active" id="mSeg" onclick="setMode('seg')">分段 (公平)</div>
+        <div class="option-btn avg-mode" id="mAvg" onclick="setMode('avg')">平均 (大锅饭)</div>
+    </div>
+
+    <div id="distInputsArea">
+        <div class="section-title">各乘客下车里程 (km)</div>
         <input type="number" id="d1" placeholder="乘客1" oninput="calc()">
         <input type="number" id="d2" placeholder="乘客2" oninput="calc()">
         <input type="number" id="d3" placeholder="乘客3" oninput="calc()">
@@ -64,24 +64,26 @@
 
     <div id="result" class="result-box">
         <div id="resList">
-            <div style="text-align:center;color:#999;padding:10px;">等待数据...</div>
+            <div style="text-align:center;color:#999;padding:10px;">等待输入数据...</div>
         </div>
         <div class="total-info" id="summary"></div>
     </div>
     
-    <a href="javascript:void(0)" class="reset-link" onclick="location.reload()">清空数据</a>
+    <a href="javascript:void(0)" class="reset-link" onclick="location.reload()">清空重新开始</a>
 </div>
 
 <script>
 let currentRate = 0.5;
 let currentPax = 4;
-let splitMode = 'seg'; // seg: 分段, avg: 平均
+let splitMode = 'seg';
 
 function setMode(m) {
     splitMode = m;
     document.getElementById('mSeg').classList.toggle('active', m === 'seg');
     document.getElementById('mAvg').classList.toggle('active', m === 'avg');
-    // 平均模式下，隐藏里程输入可能更清爽，但保留也可以，这里我们保留
+    
+    // --- 核心改动：如果是大锅饭模式，隐藏下车里程输入框 ---
+    document.getElementById('distInputsArea').style.display = (m === 'avg') ? 'none' : 'block';
     calc();
 }
 
@@ -96,6 +98,8 @@ function setPax(p) {
     currentPax = p;
     document.getElementById('p3').classList.toggle('active', p === 3);
     document.getElementById('p4').classList.toggle('active', p === 4);
+    
+    // 如果是3人模式，不管什么分摊模式，第4个输入框都要先藏好
     document.getElementById('d4').style.display = (p === 3) ? 'none' : 'block';
     calc();
 }
@@ -107,7 +111,7 @@ function calc() {
     const summary = document.getElementById('summary');
 
     if (!totalDist || totalDist <= 0) {
-        resList.innerHTML = '<div style="text-align:center;color:#999;padding:10px;">请输入总里程</div>';
+        resList.innerHTML = '<div style="text-align:center;color:#999;padding:10px;">请输入全程里程</div>';
         return;
     }
 
@@ -115,16 +119,17 @@ function calc() {
     let results = {};
 
     if (splitMode === 'avg') {
-        // --- 平均模式逻辑 ---
+        // 平均模式
         const perPerson = totalFee / currentPax;
         for(let i=1; i<=currentPax; i++) {
             results[i] = perPerson;
         }
     } else {
-        // --- 分段模式逻辑 (保持原样) ---
+        // 分段模式
         let paxes = [];
         for(let i=1; i<=currentPax; i++) {
-            let d = parseFloat(document.getElementById('d'+i).value) || 0;
+            let dVal = document.getElementById('d'+i).value;
+            let d = parseFloat(dVal) || 0;
             paxes.push({ id: i, dist: Math.min(d, totalDist) });
         }
         let sorted = [...paxes].sort((a,b) => a.dist - b.dist);
@@ -143,10 +148,10 @@ function calc() {
         }
     }
 
-    // 渲染结果
+    // 渲染
     resList.innerHTML = "";
     for(let i=1; i<=currentPax; i++) {
-        let label = splitMode === 'avg' ? `乘客 ${i}` : `乘客 ${i} (${Math.min(parseFloat(document.getElementById('d'+i).value)||0, totalDist)}km)`;
+        let label = (splitMode === 'avg') ? `乘客 ${i}` : `乘客 ${i} (${Math.min(parseFloat(document.getElementById('d'+i).value)||0, totalDist)}km)`;
         resList.innerHTML += `
             <div class="res-item">
                 <span>${label}</span>
@@ -154,7 +159,7 @@ function calc() {
             </div>`;
     }
 
-    summary.innerHTML = `模式: ${splitMode==='seg'?'分段':'平均'} | 总费: <b>${totalFee.toFixed(2)}</b> 元`;
+    summary.innerHTML = `总费: <b>${totalFee.toFixed(2)}</b> 元 | 模式: ${splitMode==='seg'?'分段':'平均'}`;
 }
 </script>
 
