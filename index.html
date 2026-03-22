@@ -3,44 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>高速费极速结算</title>
+    <title>高德智能拼车结算</title>
+    <script type="text/javascript">
+        window._AMapSecurityConfig = { securityJsCode: '请在此处填入你的安全密钥(Secret)', }; 
+    </script>
+    <script type="text/javascript" src="https://webapi.amap.com/maps?v=2.0&key=b559741e31149204588581114b731b79&plugin=AMap.Driving,AMap.AutoComplete"></script>
     <style>
-        body { font-family: -apple-system, sans-serif; background: #f4f7f9; padding: 15px; color: #333; margin: 0; }
-        .card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-width: 450px; margin: 20px auto; }
+        body { font-family: -apple-system, sans-serif; background: #f4f7f9; padding: 10px; color: #333; margin: 0; }
+        .card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-width: 480px; margin: 20px auto; }
         h2 { text-align: center; margin-top: 0; color: #007AFF; font-size: 18px; }
         
-        .section-title { font-size: 13px; font-weight: bold; color: #999; margin: 18px 0 10px 0; border-left: 3px solid #007AFF; padding-left: 8px; }
-        input[type="number"] { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; font-size: 16px; background: #fafafa; margin-bottom: 10px; outline: none; }
+        /* 地图搜索区 */
+        .map-box { background: #eef6ff; padding: 15px; border-radius: 15px; margin-bottom: 20px; border: 1px solid #d0e7ff; }
+        input[type="text"], input[type="number"] { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; font-size: 15px; background: #fff; margin-bottom: 10px; outline: none; }
+        .search-btn { width: 100%; padding: 12px; background: #007AFF; color: white; border: none; border-radius: 10px; font-size: 15px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .search-btn:active { background: #0056b3; }
+
+        .section-title { font-size: 13px; font-weight: bold; color: #999; margin: 15px 0 8px 0; border-left: 3px solid #007AFF; padding-left: 8px; }
         
         .btn-group { display: flex; gap: 8px; margin-bottom: 5px; }
         .option-btn { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 10px; text-align: center; cursor: pointer; background: white; font-weight: bold; font-size: 14px; }
         .option-btn.active { border-color: #007AFF; background: #eef6ff; color: #007AFF; }
+        .avg-btn.active { border-color: #28a745; background: #e9f7ef; color: #28a745; }
 
-        /* 平均模式激活颜色 */
-        .avg-mode.active { border-color: #28a745; background: #e9f7ef; color: #28a745; }
-
-        .result-box { margin-top: 15px; padding: 12px; background: #f0f9ff; border-radius: 12px; border: 1px solid #bae1ff; }
+        /* 结果显示 */
+        .result-box { margin-top: 20px; padding: 15px; background: #f0f9ff; border-radius: 15px; border: 1px solid #bae1ff; }
         .res-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px dashed #cce5ff; font-size: 16px; }
         .res-item:last-child { border-bottom: none; }
         .res-item b { color: #007AFF; }
-        .total-info { font-size: 12px; color: #888; margin-top: 10px; text-align: center; }
+        .total-info { font-size: 12px; color: #888; margin-top: 12px; text-align: center; line-height: 1.5; }
         
-        .reset-link { display: block; text-align: center; margin-top: 15px; font-size: 13px; color: #999; text-decoration: none; }
+        .tips { font-size: 11px; color: #999; text-align: center; margin-top: 10px; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h2>🚗 结算助手</h2>
+    <h2>🚗 智能路径结算系统</h2>
     
-    <div class="section-title">全程总里程 (km)</div>
-    <input type="number" id="totalDist" placeholder="输入高速总里程" oninput="calc()">
-
-    <div class="section-title">费率标准</div>
-    <div class="btn-group">
-        <div class="option-btn active" id="r05" onclick="setRate(0.5)">0.5</div>
-        <div class="option-btn" id="r06" onclick="setRate(0.6)">0.6</div>
+    <div class="map-box">
+        <input type="text" id="startLoc" placeholder="📍 输入起点 (如: 某某小区)">
+        <input type="text" id="endLoc" placeholder="🏁 输入终点 (如: 某某机场)">
+        <button class="search-btn" onclick="getMapData()">一键自动获取里程</button>
+        <div id="routeTips" style="font-size:12px; color:#007AFF; margin-top:8px; text-align:center;"></div>
     </div>
+
+    <div class="section-title">全程总里程 (km)</div>
+    <input type="number" id="totalDist" placeholder="手动填或地图自动填" oninput="calc()">
 
     <div class="section-title">乘车人数</div>
     <div class="btn-group">
@@ -51,25 +60,29 @@
     <div class="section-title">分摊模式</div>
     <div class="btn-group">
         <div class="option-btn active" id="mSeg" onclick="setMode('seg')">分段 (公平)</div>
-        <div class="option-btn avg-mode" id="mAvg" onclick="setMode('avg')">平均 (大锅饭)</div>
+        <div class="option-btn avg-btn" id="mAvg" onclick="setMode('avg')">平均 (一锅端)</div>
     </div>
 
-    <div id="distInputsArea">
+    <div class="section-title">费率</div>
+    <div class="btn-group">
+        <div class="option-btn active" id="r05" onclick="setRate(0.5)">0.5</div>
+        <div class="option-btn" id="r06" onclick="setRate(0.6)">0.6</div>
+    </div>
+
+    <div id="passengerArea">
         <div class="section-title">各乘客下车里程 (km)</div>
-        <input type="number" id="d1" placeholder="乘客1" oninput="calc()">
-        <input type="number" id="d2" placeholder="乘客2" oninput="calc()">
-        <input type="number" id="d3" placeholder="乘客3" oninput="calc()">
-        <input type="number" id="d4" placeholder="乘客4" oninput="calc()">
+        <input type="number" id="d1" placeholder="乘客1下车点" oninput="calc()">
+        <input type="number" id="d2" placeholder="乘客2下车点" oninput="calc()">
+        <input type="number" id="d3" placeholder="乘客3下车点" oninput="calc()">
+        <input type="number" id="d4" placeholder="乘客4下车点" oninput="calc()">
     </div>
 
     <div id="result" class="result-box">
-        <div id="resList">
-            <div style="text-align:center;color:#999;padding:10px;">等待输入数据...</div>
-        </div>
+        <div id="resList"><div style="text-align:center; color:#999; padding:10px;">等待路径数据...</div></div>
         <div class="total-info" id="summary"></div>
     </div>
-    
-    <a href="javascript:void(0)" class="reset-link" onclick="location.reload()">清空重新开始</a>
+
+    <p class="tips">※ 里程数据由高德地图提供最短路径参考</p>
 </div>
 
 <script>
@@ -77,13 +90,45 @@ let currentRate = 0.5;
 let currentPax = 4;
 let splitMode = 'seg';
 
+// --- 地图核心逻辑 ---
+function getMapData() {
+    const start = document.getElementById('startLoc').value;
+    const end = document.getElementById('endLoc').value;
+    const tips = document.getElementById('routeTips');
+
+    if (!start || !end) {
+        alert("请完整填写起点和终点！");
+        return;
+    }
+
+    tips.innerText = "🔍 正在规划最优路径...";
+
+    // 搜索路线
+    const driving = new AMap.Driving({
+        policy: AMap.DrivingPolicy.LEAST_DISTANCE // 最短路径
+    });
+
+    driving.search([{keyword:start}, {keyword:end}], function(status, result) {
+        if (status === 'complete') {
+            const route = result.routes[0];
+            const distance = (route.distance / 1000).toFixed(1);
+            const toll = route.tolls || 0; // 高德预估高速费
+            
+            document.getElementById('totalDist').value = distance;
+            tips.innerHTML = `✅ 成功获取里程：<b>${distance}km</b><br>高德预估高速费：${toll}元`;
+            calc();
+        } else {
+            tips.innerText = "❌ 未找到路径，请检查地名是否准确";
+        }
+    });
+}
+
+// --- 计算与UI逻辑 ---
 function setMode(m) {
     splitMode = m;
     document.getElementById('mSeg').classList.toggle('active', m === 'seg');
     document.getElementById('mAvg').classList.toggle('active', m === 'avg');
-    
-    // --- 核心改动：如果是大锅饭模式，隐藏下车里程输入框 ---
-    document.getElementById('distInputsArea').style.display = (m === 'avg') ? 'none' : 'block';
+    document.getElementById('passengerArea').style.display = (m === 'avg') ? 'none' : 'block';
     calc();
 }
 
@@ -98,53 +143,41 @@ function setPax(p) {
     currentPax = p;
     document.getElementById('p3').classList.toggle('active', p === 3);
     document.getElementById('p4').classList.toggle('active', p === 4);
-    
-    // 如果是3人模式，不管什么分摊模式，第4个输入框都要先藏好
     document.getElementById('d4').style.display = (p === 3) ? 'none' : 'block';
     calc();
 }
 
 function calc() {
-    const totalDistInput = document.getElementById('totalDist').value;
-    const totalDist = parseFloat(totalDistInput);
+    const totalDist = parseFloat(document.getElementById('totalDist').value);
     const resList = document.getElementById('resList');
     const summary = document.getElementById('summary');
 
-    if (!totalDist || totalDist <= 0) {
-        resList.innerHTML = '<div style="text-align:center;color:#999;padding:10px;">请输入全程里程</div>';
-        return;
-    }
+    if (!totalDist || totalDist <= 0) return;
 
-    const totalFee = totalDist * currentRate;
+    const totalCost = totalDist * currentRate;
     let results = {};
 
     if (splitMode === 'avg') {
-        // 平均模式
-        const perPerson = totalFee / currentPax;
-        for(let i=1; i<=currentPax; i++) {
-            results[i] = perPerson;
-        }
+        const per = totalCost / currentPax;
+        for(let i=1; i<=currentPax; i++) results[i] = per;
     } else {
-        // 分段模式
         let paxes = [];
         for(let i=1; i<=currentPax; i++) {
-            let dVal = document.getElementById('d'+i).value;
-            let d = parseFloat(dVal) || 0;
+            let d = parseFloat(document.getElementById('d'+i).value) || 0;
             paxes.push({ id: i, dist: Math.min(d, totalDist) });
         }
         let sorted = [...paxes].sort((a,b) => a.dist - b.dist);
         paxes.forEach(p => results[p.id] = 0);
-        let prevDist = 0;
-        let currentInCar = currentPax;
+        let prev = 0;
+        let inCar = currentPax;
         for (let i = 0; i < sorted.length; i++) {
-            let segLen = sorted[i].dist - prevDist;
+            let segLen = sorted[i].dist - prev;
             if (segLen > 0) {
                 let segCost = segLen * currentRate;
-                let perHead = segCost / currentInCar;
-                sorted.slice(i).forEach(p => results[p.id] += perHead);
+                sorted.slice(i).forEach(p => results[p.id] += (segCost / inCar));
             }
-            prevDist = sorted[i].dist;
-            currentInCar--;
+            prev = sorted[i].dist;
+            inCar--;
         }
     }
 
@@ -155,13 +188,11 @@ function calc() {
         resList.innerHTML += `
             <div class="res-item">
                 <span>${label}</span>
-                <b>${(results[i] || 0).toFixed(2)} 元</b>
+                <b>${results[i].toFixed(2)} 元</b>
             </div>`;
     }
-
-    summary.innerHTML = `总费: <b>${totalFee.toFixed(2)}</b> 元 | 模式: ${splitMode==='seg'?'分段':'平均'}`;
+    summary.innerHTML = `总里程: ${totalDist}km | 预估总费: <b>${totalCost.toFixed(2)}</b> 元`;
 }
 </script>
-
 </body>
 </html>
