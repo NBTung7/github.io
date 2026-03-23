@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>广东高速费分账-全屏版 v55.0</title>
+    <title>广东高速费精准分账-强制高速版</title>
     
     <script type="text/javascript">
         window._AMapSecurityConfig = { securityJsCode: '17a5dd8e857eed4de7532d2c61b03872', }; 
@@ -12,15 +12,11 @@
 
     <style>
         :root { --blue: #007AFF; --green: #34C759; --bg: #f2f2f7; --red: #FF3B30; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 10px; -webkit-tap-highlight-color: transparent; }
-        
-        /* 地图容器 - 支持切换高度 */
+        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 10px; }
         #map-container { position: relative; width: 100%; height: 200px; border-radius: 16px; border: 1px solid #ccc; margin-bottom: 12px; transition: height 0.3s ease; overflow: hidden; background: #fff; }
-        #map-container.fullscreen { height: 80vh; position: sticky; top: 0; z-index: 999; border-radius: 0 0 16px 16px; margin: -10px -10px 12px -10px; width: calc(100% + 20px); }
+        #map-container.fullscreen { height: 70vh; position: sticky; top: 0; z-index: 999; border-radius: 0 0 16px 16px; margin: -10px -10px 12px -10px; width: calc(100% + 20px); }
         #main-map { width: 100%; height: 100%; }
-
-        /* 全屏切换按钮样式 */
-        .fs-btn { position: absolute; top: 10px; right: 10px; z-index: 100; background: white; border: none; padding: 8px 12px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.2); font-size: 14px; font-weight: bold; color: var(--blue); }
+        .fs-btn { position: absolute; top: 10px; right: 10px; z-index: 100; background: white; border: none; padding: 8px 12px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.2); font-weight: bold; color: var(--blue); }
 
         .panel { background: white; border-radius: 20px; padding: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; }
         .loc-section { margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #f0f0f0; }
@@ -29,7 +25,9 @@
         .input-group { display: flex; gap: 6px; }
         .kw-input { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
         .btn-loc { padding: 0 12px; border: none; border-radius: 8px; color: white; background: var(--green); font-size: 13px; font-weight: bold; }
-        .btn-main { width: 100%; padding: 16px; border: none; border-radius: 14px; color: white; font-weight: bold; font-size: 18px; background: var(--blue); margin: 10px 0; }
+        
+        /* 核心按钮：亮红色提醒 */
+        .btn-main { width: 100%; padding: 16px; border: none; border-radius: 14px; color: white; font-weight: bold; font-size: 18px; background: var(--red); margin: 10px 0; box-shadow: 0 4px 10px rgba(255,59,48,0.3); }
         
         .opt-row { display: flex; gap: 6px; margin: 10px 0; }
         .opt-btn { flex: 1; padding: 10px; border: 1.5px solid #d1d1d6; border-radius: 10px; text-align: center; font-size: 13px; background: white; font-weight: bold; }
@@ -44,36 +42,28 @@
 <body>
 
 <div id="map-container">
-    <button class="fs-btn" id="fs-toggle" onclick="toggleFullScreen()">展开地图</button>
+    <button class="fs-btn" id="fs-toggle" onclick="toggleFullScreen()">全屏看路线</button>
     <div id="main-map"></div>
 </div>
 
 <div class="panel">
     <div class="loc-section">
-        <div class="row">
-            <select id="s-city"><option value="">市</option></select>
-            <select id="s-dist"><option value="">区</option></select>
-            <select id="s-town"><option value="">镇/街</option></select>
-        </div>
+        <div class="row"><select id="s-city"></select><select id="s-dist"></select><select id="s-town"></select></div>
         <div class="input-group">
-            <input type="text" id="s-kw" class="kw-input" placeholder="起点地址...">
+            <input type="text" id="s-kw" class="kw-input" placeholder="输入起点...">
             <button class="btn-loc" onclick="confirmPos('s')">📍 定位</button>
         </div>
     </div>
 
     <div class="loc-section">
-        <div class="row">
-            <select id="e-city"><option value="">市</option></select>
-            <select id="e-dist"><option value="">区</option></select>
-            <select id="e-town"><option value="">镇/街</option></select>
-        </div>
+        <div class="row"><select id="e-city"></select><select id="e-dist"></select><select id="e-town"></select></div>
         <div class="input-group">
-            <input type="text" id="e-kw" class="kw-input" placeholder="终点地址...">
+            <input type="text" id="e-kw" class="kw-input" placeholder="输入终点...">
             <button class="btn-loc" onclick="confirmPos('e')">📍 定位</button>
         </div>
     </div>
     
-    <button class="btn-main" onclick="calculateRoute()">🔍 检索高速费 (高速优先)</button>
+    <button class="btn-main" onclick="calculateRoute()">🚀 强制计算高速费 🚀</button>
 
     <div class="opt-row">
         <div class="opt-btn" id="p3" onclick="chPax(3)">3人</div>
@@ -83,13 +73,13 @@
     </div>
 
     <div id="pax-inputs">
-        <input type="number" id="v1" placeholder="客1km" oninput="finalCalc()">
-        <input type="number" id="v2" placeholder="客2km" oninput="finalCalc()">
-        <input type="number" id="v3" placeholder="客3km" oninput="finalCalc()">
-        <input type="number" id="v4" placeholder="客4km" oninput="finalCalc()">
+        <input type="number" id="v1" placeholder="客1里程" oninput="finalCalc()">
+        <input type="number" id="v2" placeholder="客2里程" oninput="finalCalc()">
+        <input type="number" id="v3" placeholder="客3里程" oninput="finalCalc()">
+        <input type="number" id="v4" placeholder="客4里程" oninput="finalCalc()">
     </div>
 
-    <div id="final-res" class="res-box" style="text-align:center; color:#999;">请先定位起终点</div>
+    <div id="final-res" class="res-box">请先完成[定位]并点击按钮</div>
 </div>
 
 <script>
@@ -97,26 +87,9 @@ let map, ds, geo, drv;
 let totalKM = 0, totalTolls = 0, paxCount = 4, modeType = 'seg';
 let markers = { s: null, e: null };
 
-function toggleFullScreen() {
-    const container = document.getElementById('map-container');
-    const btn = document.getElementById('fs-toggle');
-    if(container.classList.contains('fullscreen')) {
-        container.classList.remove('fullscreen');
-        btn.innerText = '展开地图';
-    } else {
-        container.classList.add('fullscreen');
-        btn.innerText = '缩小地图';
-    }
-    // 强制地图重绘
-    if(map) map.resize();
-}
-
 window.onload = function() {
     map = new AMap.Map('main-map', { zoom: 10 });
-    
-    // 添加缩放控件
     map.addControl(new AMap.ToolBar({ position: 'RB' }));
-
     ds = new AMap.DistrictSearch({ subdistrict: 1 });
     geo = new AMap.Geocoder();
 
@@ -135,13 +108,18 @@ window.onload = function() {
     });
 };
 
+function toggleFullScreen() {
+    const c = document.getElementById('map-container');
+    c.classList.toggle('fullscreen');
+    document.getElementById('fs-toggle').innerText = c.classList.contains('fullscreen') ? '缩小地图' : '全屏看路线';
+    map.resize();
+}
+
 function fill(id, list) {
     const el = document.getElementById(id);
     const label = id.includes('city') ? '市' : (id.includes('dist') ? '区' : '镇');
     el.innerHTML = `<option value="">${label}</option>`;
-    if(list) list.sort((a,b)=>a.name.localeCompare(b.name)).forEach(i => {
-        el.innerHTML += `<option value="${i.name}">${i.name}</option>`;
-    });
+    if(list) list.sort((a,b)=>a.name.localeCompare(b.name)).forEach(i => el.innerHTML += `<option value="${i.name}">${i.name}</option>`);
 }
 
 function loadNext(p, val, level) {
@@ -161,7 +139,7 @@ function confirmPos(p) {
     geo.getLocation(addr, (status, result) => {
         if (status === 'complete' && result.geocodes.length) {
             setMarker(p, result.geocodes[0].location);
-        } else { alert("定位失败"); }
+        } else { alert("定位失败，请检查地址"); }
     });
 }
 
@@ -169,21 +147,35 @@ function setMarker(p, loc) {
     if(markers[p]) map.remove(markers[p]);
     markers[p] = new AMap.Marker({ position: loc, label: { content: p==='s'?'起点':'终点', direction:'top' }});
     map.add(markers[p]);
-    map.setZoomAndCenter(14, loc);
+    map.setFitView();
 }
 
+// 【关键更新】：强制规划高速路线
 function calculateRoute() {
-    if(!markers.s || !markers.e) return alert("请先定位！");
+    if(!markers.s || !markers.e) return alert("请先完成起点和终点的定位！");
     if(drv) drv.clear();
-    drv = new AMap.Driving({ map: map, policy: 8 });
+    
+    // 策略 4：FIRST_TICKET 强制收费优先 (高速优先)
+    // 如果依然返回0，说明这两点之间确实没有收费站（比如都在广州市区内）
+    drv = new AMap.Driving({ 
+        map: map, 
+        policy: 4, 
+        showTraffic: true 
+    });
+
     drv.search(markers.s.getPosition(), markers.e.getPosition(), (status, result) => {
         if (status === 'complete') {
             const r = result.routes[0];
             totalKM = parseFloat((r.distance / 1000).toFixed(1));
             totalTolls = parseFloat(r.tolls || 0).toFixed(2);
+            
+            if(totalTolls <= 0) {
+                alert("警告：高德返回过路费为0。请全屏查看蓝色路线，确认是否避开了收费站。");
+            }
+            
             map.setFitView();
             finalCalc();
-        } else { alert("规划失败"); }
+        } else { alert("路径规划失败！"); }
     });
 }
 
@@ -206,12 +198,13 @@ function finalCalc() {
     if(!totalKM) return;
     const rate = totalKM > 0 ? (totalTolls / totalKM) : 0;
     let html = `
-        <div class="res-line" style="color:var(--blue)"><span>里程</span><b>${totalKM} km</b></div>
-        <div class="res-line" style="color:var(--red)"><span>高速费</span><b>￥${totalTolls}</b></div>
+        <div class="res-line" style="color:var(--blue)"><span>全程里程</span><b>${totalKM} km</b></div>
+        <div class="res-line" style="color:var(--red)"><span>高速费用</span><b>￥${totalTolls}</b></div>
     `;
+    
     if(modeType === 'avg') {
         const per = totalTolls / paxCount;
-        for(let i=1; i<=paxCount; i++) html += `<div class="res-line"><span>客 ${i}</span><b>${per.toFixed(2)} 元</b></div>`;
+        for(let i=1; i<=paxCount; i++) html += `<div class="res-line"><span>客 ${i} 平摊</span><b>${per.toFixed(2)} 元</b></div>`;
     } else {
         let items = [];
         for(let i=1; i<=paxCount; i++) {
@@ -221,6 +214,7 @@ function finalCalc() {
         let sorted = [...items].sort((a,b) => a.dist - b.dist);
         let resMap = {}; items.forEach(x => resMap[x.id] = 0);
         let last = 0, count = paxCount;
+        
         for (let i = 0; i < sorted.length; i++) {
             let seg = sorted[i].dist - last;
             if (seg > 0) {
@@ -230,7 +224,7 @@ function finalCalc() {
             last = sorted[i].dist;
             count--;
         }
-        items.forEach(x => { html += `<div class="res-line"><span>客 ${x.id}</span><b>${resMap[x.id].toFixed(2)} 元</b></div>`; });
+        items.forEach(x => { html += `<div class="res-line"><span>客 ${x.id} 分账</span><b>${resMap[x.id].toFixed(2)} 元</b></div>`; });
     }
     document.getElementById('final-res').innerHTML = html;
 }
