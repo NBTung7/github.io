@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>广东高速费分账-布局优化版 v61.0</title>
+    <title>广东高速费分账-定位聚焦版 v63.0</title>
     
     <script type="text/javascript">
         window._AMapSecurityConfig = { securityJsCode: '17a5dd8e857eed4de7532d2c61b03872', }; 
@@ -12,9 +12,9 @@
 
     <style>
         :root { --blue: #007AFF; --green: #34C759; --bg: #f2f2f7; --red: #FF3B30; --gray: #8e8e93; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 10px; font-size: 14px; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 10px; font-size: 14px; -webkit-tap-highlight-color: transparent; }
         
-        #map-container { position: relative; width: 100%; height: 180px; border-radius: 16px; border: 1px solid #ccc; margin-bottom: 12px; transition: 0.3s; overflow: hidden; background: #fff; }
+        #map-container { position: relative; width: 100%; height: 300px; border-radius: 16px; border: 1px solid #ccc; margin-bottom: 12px; transition: height 0.3s ease; overflow: hidden; background: #fff; }
         #map-container.fullscreen { height: 70vh; position: sticky; top: 0; z-index: 999; margin: -10px -10px 12px -10px; width: calc(100% + 20px); border-radius: 0 0 16px 16px; }
         #main-map { width: 100%; height: 100%; }
         .fs-btn { position: absolute; top: 8px; right: 8px; z-index: 100; background: rgba(255,255,255,0.95); border: 1px solid #ccc; padding: 6px 12px; border-radius: 8px; font-size: 13px; font-weight: bold; color: var(--blue); }
@@ -31,7 +31,6 @@
         .bg-blue { background: var(--blue); }
         .bg-red { background: var(--red); box-shadow: 0 4px 12px rgba(255,59,48,0.2); }
 
-        /* 状态显示框 - 永久显示 */
         .status-box { padding: 12px; background: #f8f9fa; border-radius: 12px; border: 1px solid #eee; margin-top: 8px; margin-bottom: 12px; min-height: 40px; }
         
         .config-row { display: flex; gap: 8px; margin: 10px 0; }
@@ -43,7 +42,6 @@
         .pax-box span { font-size: 11px; font-weight: bold; color: #777; }
         .pax-num-input { width: 100%; padding: 12px 0; border: 1px solid #ccc; border-radius: 10px; text-align: center; font-size: 16px; background: #fff; }
         
-        /* 账单结果框 - 永久显示 */
         .res-box { padding: 15px; background: #fff; border-radius: 16px; border: 2px solid var(--blue); margin-top: 8px; min-height: 100px; }
         .res-line { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #eee; font-weight: bold; font-size: 15px; }
     </style>
@@ -117,7 +115,7 @@ window.onload = function() {
         document.getElementById(p+'-city').onchange = (e) => loadNext(p, e.target.value, 'city');
         document.getElementById(p+'-dist').onchange = (e) => loadNext(p, e.target.value, 'district');
         const auto = new AMap.AutoComplete({ input: p + '-kw', city: '广东' });
-        auto.on('select', (e) => { if(e.poi.location) setMarker(p, e.poi.location); });
+        auto.on('select', (e) => { if(e.poi.location) setMarker(p, e.poi.location, true); });
     });
 };
 
@@ -142,15 +140,20 @@ function loadNext(p, val, level) {
 function confirmPos(p) {
     const addr = `广东省${document.getElementById(p+'-city').value}${document.getElementById(p+'-dist').value}${document.getElementById(p+'-town').value}${document.getElementById(p+'-kw').value}`;
     geo.getLocation(addr, (status, result) => {
-        if (status === 'complete' && result.geocodes.length) setMarker(p, result.geocodes[0].location);
+        if (status === 'complete' && result.geocodes.length) setMarker(p, result.geocodes[0].location, true);
     });
 }
 
-function setMarker(p, loc) {
+// 修改 setMarker，增加 zoomToPoint 参数
+function setMarker(p, loc, zoomToPoint) {
     if(markers[p]) map.remove(markers[p]);
     markers[p] = new AMap.Marker({ position: loc, label: { content: p==='s'?'起':'终', direction:'top' }});
     map.add(markers[p]);
-    map.setFitView();
+    
+    if(zoomToPoint) {
+        // 单点定位：聚焦到该点，并设置较大的缩放级别（16）
+        map.setZoomAndCenter(16, loc);
+    }
 }
 
 function calculateRoute() {
@@ -167,9 +170,9 @@ function calculateRoute() {
                 &nbsp;&nbsp;&nbsp; 
                 <span style="color:var(--red); font-weight:bold;">路费: ￥${totalTolls}</span>
             `;
-        } else { 
-            document.getElementById('status-display').innerHTML = `<span style="color:var(--red);">获取失败，请确认定位！</span>`;
-        }
+            // 只有在生成路线后，才让地图自动调整视野看到全部
+            map.setFitView();
+        } else { alert("获取失败"); }
     });
 }
 
@@ -177,7 +180,7 @@ function chPax(n) {
     paxCount = n; 
     document.getElementById('p3').className=n==3?'opt-btn active':'opt-btn'; 
     document.getElementById('p4').className=n==4?'opt-btn active':'opt-btn'; 
-    document.getElementById('item-v4').style.visibility=n==3?'hidden':'visible'; 
+    document.getElementById('item-v4').style.display=n==3?'none':'flex'; 
 }
 
 function chMode(m) { 
@@ -187,10 +190,9 @@ function chMode(m) {
 }
 
 function finalCalc() {
-    if(!totalKM) return alert("请先获取高速费数据！");
+    if(!totalKM) return alert("请先获取过路费数据！");
     const rate = totalTolls / totalKM;
     let html = ``;
-    
     if(modeType === 'avg') {
         const per = totalTolls / paxCount;
         for(let i=1; i<=paxCount; i++) html += `<div class="res-line"><span>客 ${i} 分摊</span><b>${per.toFixed(2)} 元</b></div>`;
