@@ -3,50 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>高德全称搜索结算 v35.0</title>
+    <title>广东全境点选结算 v36.0</title>
     
     <script type="text/javascript">
         window._AMapSecurityConfig = { securityJsCode: 'b559741e31149204588581114b731b79', }; 
     </script>
-    <script type="text/javascript" src="https://webapi.amap.com/maps?v=2.0&key=d40b46f59c6ac01013fb25c663857fff&plugin=AMap.Driving,AMap.AutoComplete"></script>
+    <script type="text/javascript" src="https://webapi.amap.com/maps?v=2.0&key=d40b46f59c6ac01013fb25c663857fff&plugin=AMap.Driving,AMap.DistrictSearch"></script>
 
     <style>
-        :root { --amap-blue: #007AFF; --ios-bg: #f2f2f7; --danger: #ff3b30; --success: #34c759; }
-        body { font-family: -apple-system, sans-serif; background: var(--ios-bg); margin: 0; padding: 10px; -webkit-tap-highlight-color: transparent; }
+        :root { --amap-blue: #007AFF; --ios-bg: #f2f2f7; --danger: #ff3b30; }
+        body { font-family: -apple-system, sans-serif; background: var(--ios-bg); margin: 0; padding: 10px; }
         .container { max-width: 600px; margin: auto; }
 
-        /* 地图区 */
-        .map-wrap { width: 100%; height: 260px; background: #fff; border-radius: 18px; position: relative; overflow: hidden; border: 1px solid #d1d1d6; margin-bottom: 8px; }
+        .map-wrap { width: 100%; height: 200px; border-radius: 18px; overflow: hidden; border: 1px solid #d1d1d6; margin-bottom: 8px; }
         #amap-box { width: 100%; height: 100%; }
-
-        .map-ctrl { display: flex; gap: 8px; margin-bottom: 12px; }
-        .map-ctrl-btn { flex: 1; padding: 10px; background: white; border: 1px solid #d1d1d6; border-radius: 10px; font-size: 13px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 
         .panel { background: white; border-radius: 24px; padding: 18px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); }
         
-        .input-group { position: relative; margin-bottom: 10px; }
-        .input-group input { width: 100%; padding: 14px; border: 1px solid #e5e5ea; border-radius: 12px; font-size: 16px; box-sizing: border-box; outline: none; background: #f9f9fb; }
-        .input-group input:focus { border-color: var(--amap-blue); background: #fff; }
+        /* 级联选择器样式 */
+        .select-group { margin-bottom: 15px; background: #f9f9fb; padding: 12px; border-radius: 14px; border: 1px solid #e5e5ea; }
+        .select-title { font-size: 12px; color: #8e8e93; margin-bottom: 8px; font-weight: bold; display: block; }
+        .cascader { display: flex; gap: 5px; margin-bottom: 10px; }
+        select { flex: 1; padding: 10px 5px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; outline: none; background: white; -webkit-appearance: none; }
 
-        /* 搜索建议列表样式增强 */
-        .amap-sug-result { border-radius: 12px; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.15) !important; padding: 5px 0; }
-        .auto-item { padding: 10px 15px; font-size: 14px; border-bottom: 1px solid #f2f2f7; }
-        .auto-item-district { color: #8e8e93; font-size: 11px; margin-right: 5px; background: #eee; padding: 2px 5px; border-radius: 4px; }
-        
         .btn-run { width: 100%; padding: 16px; border: none; border-radius: 14px; color: white; font-weight: bold; font-size: 17px; background: var(--amap-blue); cursor: pointer; margin-bottom: 15px; }
 
+        /* 结果与计费保持一致 */
         .best-route-info { background: #f2f8ff; padding: 15px; border-radius: 14px; border: 1.5px solid #d0e7ff; margin-bottom: 15px; display: none; text-align: center; }
         .best-route-info div { display: flex; justify-content: space-around; margin-top: 8px; }
         .info-item { display: flex; flex-direction: column; gap: 4px; }
         .info-label { font-size: 11px; color: #7a9cb5; }
-        .info-val { font-size: 17px; font-weight: bold; color: #1c1c1e; }
+        .info-val { font-size: 17px; font-weight: bold; }
 
         .opt-row { display: flex; gap: 6px; margin-bottom: 8px; }
         .opt-btn { flex: 1; padding: 12px; border: 1.5px solid #d1d1d6; border-radius: 10px; text-align: center; font-size: 13px; background: white; font-weight: bold; }
         .opt-btn.active { border-color: var(--amap-blue); background: #f2f8ff; color: var(--amap-blue); }
         
-        #pax-inputs input { margin-bottom: 8px; border-radius: 10px; border: 1px solid #eee; padding: 12px; width: 100%; box-sizing: border-box; }
-        
+        #pax-inputs input { margin-bottom: 8px; border-radius: 10px; border: 1px solid #eee; padding: 12px; width: 100%; box-sizing: border-box; font-size: 15px; }
         .res-panel { margin-top: 15px; padding: 15px; background: #fff; border-radius: 15px; border: 2px solid var(--amap-blue); }
         .res-line { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px dashed #eee; font-size: 17px; font-weight: bold; color: #003e7e; }
     </style>
@@ -56,19 +49,29 @@
 <div class="container">
     <div class="map-wrap"><div id="amap-box"></div></div>
 
-    <div class="map-ctrl">
-        <button class="map-ctrl-btn" onclick="recenter()">🎯 定位中心</button>
-        <button class="map-ctrl-btn" onclick="location.reload()" style="color:var(--danger); border-color:var(--danger);">🧹 全部清空</button>
-    </div>
-
     <div class="panel">
-        <div class="input-group"><input type="text" id="sInput" placeholder="📍 搜索起点..." autocomplete="off"></div>
-        <div class="input-group"><input type="text" id="eInput" placeholder="🏁 搜索终点..." autocomplete="off"></div>
+        <div class="select-group">
+            <span class="select-title">📍 选择起点 (广东省内)</span>
+            <div class="cascader">
+                <select id="s-city" onchange="loadDistrict('s', this.value)"><option>加载城市...</option></select>
+                <select id="s-dist" onchange="loadStreet('s', this.value)"><option>选择区县</option></select>
+                <select id="s-street"><option>选择乡镇</option></select>
+            </div>
+        </div>
+
+        <div class="select-group">
+            <span class="select-title">🏁 选择终点 (广东省内)</span>
+            <div class="cascader">
+                <select id="e-city" onchange="loadDistrict('e', this.value)"><option>加载城市...</option></select>
+                <select id="e-dist" onchange="loadStreet('e', this.value)"><option>选择区县</option></select>
+                <select id="e-street"><option>选择乡镇</option></select>
+            </div>
+        </div>
         
-        <button class="btn-run" onclick="planBest()">🔍 规划路线并计算</button>
+        <button class="btn-run" onclick="planBest()">🔍 开始精准导航计费</button>
 
         <div id="routeInfo" class="best-route-info">
-            <span style="font-size: 12px; font-weight: bold; color: var(--amap-blue);">已为您选择高德最佳路线</span>
+            <span style="font-size: 12px; font-weight: bold; color: var(--amap-blue);">最佳路径数据</span>
             <div>
                 <div class="info-item"><span class="info-label">里程</span><span class="info-val"><span id="r-dist">0</span>km</span></div>
                 <div class="info-item"><span class="info-label">路费</span><span class="info-val"><span id="r-toll">0</span>元</span></div>
@@ -90,39 +93,67 @@
             <input type="number" id="v4" placeholder="乘客4里程" oninput="calculate()">
         </div>
 
-        <div class="res-panel"><div id="final-res" style="text-align:center;color:#999;font-size: 14px;">等待路径数据...</div></div>
+        <div class="res-panel"><div id="final-res" style="text-align:center;color:#999;font-size: 14px;">请选择起终点并点击规划</div></div>
     </div>
 </div>
 
 <script>
-let aMap, aMarker, myLng, myLat, totalKM = 0, totalPrice = 0, paxCount = 4, modeType = 'seg', driving = null;
+let aMap, districtSearch, totalKM = 0, totalPrice = 0, paxCount = 4, modeType = 'seg', driving = null;
 
 function init() {
-    aMap = new AMap.Map('amap-box', { zoom: 14 });
-    aMarker = new AMap.Marker({ map: aMap, icon: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_b.png' });
-
-    // 配置模糊搜索：通过自定义 formatResult 实现 “省-市-地点”
-    const autoOptions = {
-        input: "", // 稍后手动绑定
-        outPutDirAuto: false
-    };
-
-    const sAuto = new AMap.AutoComplete({ ...autoOptions, input: "sInput" });
-    const eAuto = new AMap.AutoComplete({ ...autoOptions, input: "eInput" });
-
-    // 重点：改良显示格式
-    // 默认高德的下拉项 HTML 类名是 amap-sug-result
-    // 我们通过 CSS 伪类或直接控制数据（由于高德 AutoComplete 封装较严，最稳妥的是处理显示文字）
+    aMap = new AMap.Map('amap-box', { zoom: 10 });
+    districtSearch = new AMap.DistrictSearch({ subdistrict: 1, level: 'province', showbiz: false });
+    
+    // 初始化广东省的城市列表
+    districtSearch.search('广东省', (status, result) => {
+        if(status === 'complete') {
+            const cities = result.districtList[0].districtList;
+            fillSelect('s-city', cities);
+            fillSelect('e-city', cities);
+        }
+    });
 }
 
-function recenter() { if(myLng) aMap.setCenter([myLng, myLat]); aMap.setZoom(15); }
+// 填充下拉框
+function fillSelect(id, list) {
+    const el = document.getElementById(id);
+    el.innerHTML = '<option value="">请选择</option>';
+    list.sort((a,b)=>a.name.localeCompare(b.name, 'zh')).forEach(item => {
+        el.innerHTML += `<option value="${item.name}">${item.name}</option>`;
+    });
+}
+
+// 加载二级：区县
+function loadDistrict(prefix, cityName) {
+    if(!cityName) return;
+    districtSearch.setLevel('city');
+    districtSearch.search(cityName, (status, result) => {
+        if(status === 'complete') fillSelect(prefix + '-dist', result.districtList[0].districtList);
+    });
+}
+
+// 加载三级：乡镇街道
+function loadStreet(prefix, distName) {
+    if(!distName) return;
+    districtSearch.setLevel('district');
+    districtSearch.search(distName, (status, result) => {
+        if(status === 'complete') fillSelect(prefix + '-street', result.districtList[0].districtList);
+    });
+}
 
 function planBest() {
-    const s = document.getElementById('sInput').value, e = document.getElementById('eInput').value;
-    if(!s || !e) return alert("请输入起终点");
+    const sC = document.getElementById('s-city').value, sD = document.getElementById('s-dist').value, sS = document.getElementById('s-street').value;
+    const eC = document.getElementById('e-city').value, eD = document.getElementById('e-dist').value, eS = document.getElementById('e-street').value;
+    
+    if(!sS || !eS) return alert("请选到具体的镇/街道再规划");
+
+    const startPoint = `广东省${sC}${sD}${sS}`;
+    const endPoint = `广东省${eC}${eD}${eS}`;
+
     if(driving) driving.clear();
     driving = new AMap.Driving({ map: aMap, policy: AMap.DrivingPolicy.LEAST_TIME });
-    driving.search([{keyword:s},{keyword:e}], (status, result) => {
+    
+    driving.search([{keyword: startPoint},{keyword: endPoint}], (status, result) => {
         if (status === 'complete') {
             const route = result.routes[0];
             totalKM = (route.distance / 1000).toFixed(1);
@@ -133,10 +164,13 @@ function planBest() {
             document.getElementById('r-toll').innerText = toll;
             document.getElementById('r-price').innerText = totalPrice;
             calculate();
+        } else {
+            alert("路径搜索失败，请尝试选择相邻街道");
         }
     });
 }
 
+// 保留计费逻辑
 function chPax(n) { paxCount = n; document.getElementById('p3').className=n==3?'opt-btn active':'opt-btn'; document.getElementById('p4').className=n==4?'opt-btn active':'opt-btn'; document.getElementById('v4').style.display=n==3?'none':'block'; calculate(); }
 function chMode(m) { modeType = m; document.getElementById('mS').className=m=='seg'?'opt-btn active':'opt-btn'; document.getElementById('mA').className=m=='avg'?'opt-btn active':'opt-btn'; document.getElementById('pax-inputs').style.display=m=='avg'?'none':'block'; calculate(); }
 
@@ -170,31 +204,7 @@ function calculate() {
     document.getElementById('final-res').innerHTML = html;
 }
 
-// 持续定位
-if (navigator.geolocation) {
-    navigator.geolocation.watchPosition(pos => {
-        myLng = pos.coords.longitude; myLat = pos.coords.latitude;
-        if(aMarker) aMarker.setPosition([myLng, myLat]);
-    }, null, { enableHighAccuracy: true });
-}
-
 window.onload = init;
 </script>
-
-<style>
-    /* 高德自动补全会有 district 和 address 字段，默认隐藏了。我们强制显示并重新布局 */
-    .amap-sug-result .sug-address {
-        display: inline-block !important;
-        color: #999;
-        font-size: 12px;
-        margin-left: 8px;
-    }
-    /* 每一个建议项的容器 */
-    .auto-item {
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-</style>
 </body>
 </html>
