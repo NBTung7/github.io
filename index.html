@@ -3,43 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>广东三图精准计费 v47.0</title>
+    <title>广东三图计费旗舰版 v48.0</title>
     
     <script type="text/javascript">
-        // 使用您提供的第一个密钥
         window._AMapSecurityConfig = { securityJsCode: '17a5dd8e857eed4de7532d2c61b03872', }; 
     </script>
-    
     <script type="text/javascript" src="https://webapi.amap.com/maps?v=2.0&key=1e1827b3250f2fc8380020d354978d39&plugin=AMap.Driving,AMap.DistrictSearch,AMap.AutoComplete,AMap.Geocoder"></script>
 
     <style>
         :root { --blue: #007AFF; --bg: #f2f2f7; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 10px; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 10px; -webkit-tap-highlight-color: transparent; }
         .container { max-width: 600px; margin: auto; }
 
-        /* 地图三视图布局 */
+        /* 地图区 */
         .maps-grid { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
-        #main-map { width: 100%; height: 180px; border-radius: 16px; border: 1px solid #d1d1d6; background: #fff; }
-        .sub-row { display: flex; gap: 8px; height: 110px; }
+        #main-map { width: 100%; height: 160px; border-radius: 16px; border: 1px solid #d1d1d6; background: #fff; }
+        .sub-row { display: flex; gap: 8px; height: 100px; }
         .sub-map-wrapper { flex: 1; position: relative; border-radius: 12px; border: 1px solid #d1d1d6; overflow: hidden; background: #fff; }
-        .map-label { position: absolute; top: 0; left: 0; z-index: 10; background: rgba(0,0,0,0.6); color: white; font-size: 10px; padding: 2px 6px; border-bottom-right-radius: 8px; pointer-events: none; }
+        .map-label { position: absolute; top: 0; left: 0; z-index: 10; background: rgba(0,0,0,0.6); color: white; font-size: 10px; padding: 2px 6px; border-bottom-right-radius: 8px; }
 
-        /* 操作面板 */
-        .panel { background: white; border-radius: 20px; padding: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        .loc-box { margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #f0f0f0; }
-        .label-text { font-size: 11px; color: #888; font-weight: bold; margin-bottom: 6px; display: block; }
-        
+        /* 面板 */
+        .panel { background: white; border-radius: 20px; padding: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 15px; }
+        .loc-box { margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #f0f0f0; }
         .select-row { display: flex; gap: 4px; margin-bottom: 6px; }
-        select { flex: 1; padding: 10px 2px; border: 1px solid #e5e5ea; border-radius: 8px; font-size: 12px; background: #f9f9fb; outline: none; }
-        
-        .kw-input { width: 100%; padding: 12px; border: 1px solid #e5e5ea; border-radius: 8px; font-size: 14px; box-sizing: border-box; outline: none; }
-        .kw-input:focus { border-color: var(--blue); }
+        select { flex: 1; padding: 8px 2px; border: 1px solid #e5e5ea; border-radius: 8px; font-size: 12px; background: #f9f9fb; outline: none; }
+        .kw-input { width: 100%; padding: 10px; border: 1px solid #e5e5ea; border-radius: 8px; font-size: 14px; box-sizing: border-box; }
 
-        .btn-calc { width: 100%; padding: 16px; border: none; border-radius: 14px; color: white; font-weight: bold; font-size: 17px; background: var(--blue); cursor: pointer; margin: 10px 0; }
+        .btn-calc { width: 100%; padding: 15px; border: none; border-radius: 14px; color: white; font-weight: bold; font-size: 17px; background: var(--blue); cursor: pointer; margin: 10px 0; }
         
-        .res-box { padding: 15px; background: #fdfdfd; border-radius: 15px; border: 2px solid var(--blue); min-height: 40px; }
-        .res-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #eee; font-size: 16px; font-weight: bold; }
-        .res-item:last-child { border-bottom: none; }
+        /* 计费配置区 */
+        .opt-row { display: flex; gap: 6px; margin: 10px 0; }
+        .opt-btn { flex: 1; padding: 10px; border: 1.5px solid #d1d1d6; border-radius: 10px; text-align: center; font-size: 13px; background: white; font-weight: bold; }
+        .opt-btn.active { border-color: var(--blue); background: #f2f8ff; color: var(--blue); }
+        
+        #pax-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+        #pax-inputs input { border-radius: 10px; border: 1px solid #eee; padding: 12px; width: 100%; box-sizing: border-box; font-size: 14px; background: #fafafa; }
+        
+        /* 结果面板 */
+        .res-box { padding: 15px; background: #fff; border-radius: 15px; border: 2px solid var(--blue); margin-top: 10px; }
+        .res-line { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #eee; font-size: 15px; font-weight: bold; }
+        .res-line:last-child { border-bottom: none; }
     </style>
 </head>
 <body>
@@ -48,51 +51,61 @@
     <div class="maps-grid">
         <div id="main-map"></div>
         <div class="sub-row">
-            <div class="sub-map-wrapper"><span class="map-label">起点预览</span><div id="s-map" style="height:100%"></div></div>
-            <div class="sub-map-wrapper"><span class="map-label">终点预览</span><div id="e-map" style="height:100%"></div></div>
+            <div class="sub-map-wrapper"><span class="map-label">起点</span><div id="s-map" style="height:100%"></div></div>
+            <div class="sub-map-wrapper"><span class="map-label">终点</span><div id="e-map" style="height:100%"></div></div>
         </div>
     </div>
 
     <div class="panel">
         <div class="loc-box">
-            <span class="label-text">起点 (广东)</span>
             <div class="select-row">
                 <select id="s-city" onchange="subChange('s', this.value, 'city')"><option value="">市</option></select>
                 <select id="s-dist" onchange="subChange('s', this.value, 'district')"><option value="">区</option></select>
                 <select id="s-town" onchange="updateLoc('s')"><option value="">镇/街</option></select>
             </div>
-            <input type="text" id="s-kw" class="kw-input" placeholder="输入关键词 (如大厦、路口...)">
+            <input type="text" id="s-kw" class="kw-input" placeholder="起点关键词...">
         </div>
 
         <div class="loc-box">
-            <span class="label-text">终点 (广东)</span>
             <div class="select-row">
                 <select id="e-city" onchange="subChange('e', this.value, 'city')"><option value="">市</option></select>
                 <select id="e-dist" onchange="subChange('e', this.value, 'district')"><option value="">区</option></select>
                 <select id="e-town" onchange="updateLoc('e')"><option value="">镇/街</option></select>
             </div>
-            <input type="text" id="e-kw" class="kw-input" placeholder="输入关键词 (如目的地名...)">
+            <input type="text" id="e-kw" class="kw-input" placeholder="终点关键词...">
         </div>
         
-        <button class="btn-calc" onclick="runRoute()">🔍 计算最优路径</button>
-        <div id="final-res" class="res-box" style="text-align:center;color:#999;">等待输入数据...</div>
+        <button class="btn-calc" onclick="runRoute()">🔍 获取路径并开始计费</button>
+
+        <div class="opt-row">
+            <div class="opt-btn" id="p3" onclick="chPax(3)">3人</div>
+            <div class="opt-btn active" id="p4" onclick="chPax(4)">4人</div>
+            <div class="opt-btn active" id="mS" onclick="chMode('seg')">分段</div>
+            <div class="opt-btn" id="mA" onclick="chMode('avg')">平摊</div>
+        </div>
+
+        <div id="pax-inputs">
+            <input type="number" id="v1" placeholder="客1km" oninput="calculate()">
+            <input type="number" id="v2" placeholder="客2km" oninput="calculate()">
+            <input type="number" id="v3" placeholder="客3km" oninput="calculate()">
+            <input type="number" id="v4" placeholder="客4km" oninput="calculate()">
+        </div>
+
+        <div id="final-res" class="res-box" style="text-align:center;color:#999;font-size:13px;">等待路径数据</div>
     </div>
 </div>
 
 <script>
 let mMain, mS, mE, ds, geo, drv;
+let totalKM = 0, totalPrice = 0, paxCount = 4, modeType = 'seg';
 
-// 初始化
 function init() {
-    // 同一个 Key 初始化三个不同的容器
     mMain = new AMap.Map('main-map', { zoom: 10 });
-    mS = new AMap.Map('s-map', { zoom: 14, zoomEnable: true });
-    mE = new AMap.Map('e-map', { zoom: 14, zoomEnable: true });
-
+    mS = new AMap.Map('s-map', { zoom: 14 });
+    mE = new AMap.Map('e-map', { zoom: 14 });
     ds = new AMap.DistrictSearch({ subdistrict: 1 });
     geo = new AMap.Geocoder();
 
-    // 默认载入广东省城市
     ds.search('广东省', (status, result) => {
         if(status === 'complete') {
             const list = result.districtList[0].districtList;
@@ -100,8 +113,17 @@ function init() {
         }
     });
 
-    // 分别给两个输入框绑定模糊搜索
-    bindSearch('s'); bindSearch('e');
+    ['s','e'].forEach(p => {
+        const auto = new AMap.AutoComplete({ input: p + '-kw', city: '广东' });
+        auto.on('select', (e) => {
+            const map = (p === 's' ? mS : mE);
+            if(e.poi.location) {
+                map.setCenter(e.poi.location);
+                map.clearMap();
+                new AMap.Marker({ position: e.poi.location, map: map });
+            }
+        });
+    });
 }
 
 function fill(id, list) {
@@ -119,30 +141,13 @@ function subChange(p, val, level) {
     ds.search(val, (status, result) => {
         if(status === 'complete') {
             const list = result.districtList[0].districtList;
-            if(level === 'city') {
-                fill(p+'-dist', list); fill(p+'-town', null);
-            } else {
-                fill(p+'-town', list);
-            }
+            if(level === 'city') { fill(p+'-dist', list); fill(p+'-town', null); }
+            else { fill(p+'-town', list); }
         }
-        updateLoc(p); // 下拉框切换，小地图跟随
+        updateLoc(p);
     });
 }
 
-// 绑定搜索建议
-function bindSearch(p) {
-    const auto = new AMap.AutoComplete({ input: p + '-kw', city: '广东', citylimit: true });
-    auto.on('select', (e) => {
-        const map = (p === 's' ? mS : mE);
-        if(e.poi.location) {
-            map.setCenter(e.poi.location);
-            map.clearMap();
-            new AMap.Marker({ position: e.poi.location, map: map });
-        }
-    });
-}
-
-// 联动刷新定位
 function updateLoc(p) {
     const city = document.getElementById(p+'-city').value;
     const dist = document.getElementById(p+'-dist').value;
@@ -158,13 +163,10 @@ function updateLoc(p) {
     });
 }
 
-// 路径规划核心
 function runRoute() {
     const getA = (p) => {
-        const c = document.getElementById(p+'-city').value;
-        const d = document.getElementById(p+'-dist').value;
-        const t = document.getElementById(p+'-town').value;
-        const k = document.getElementById(p+'-kw').value;
+        const c = document.getElementById(p+'-city').value, d = document.getElementById(p+'-dist').value,
+              t = document.getElementById(p+'-town').value, k = document.getElementById(p+'-kw').value;
         return `广东省${c}${d}${t}${k}`;
     };
 
@@ -172,21 +174,59 @@ function runRoute() {
     drv = new AMap.Driving({ map: mMain, policy: AMap.DrivingPolicy.LEAST_TIME });
     
     drv.search([{keyword: getA('s')}, {keyword: getA('e')}], (status, result) => {
-        const box = document.getElementById('final-res');
         if (status === 'complete') {
             const r = result.routes[0];
-            const km = (r.distance / 1000).toFixed(1);
-            const toll = r.tolls || 0;
-            const total = (parseFloat(toll) + km * 2.4).toFixed(1);
-            box.innerHTML = `
-                <div class="res-item" style="color:var(--blue)"><span>全程路程</span><b>${km} km</b></div>
-                <div class="res-item"><span>高速费用</span><b>${toll} 元</b></div>
-                <div class="res-item" style="color:red; font-size:18px;"><span>预估费用</span><b>￥${total}</b></div>
-            `;
-        } else {
-            alert("地址不够精确，请尝试从搜索建议中选择或精简关键词");
-        }
+            totalKM = parseFloat((r.distance / 1000).toFixed(1));
+            totalPrice = (parseFloat(r.tolls || 0) + totalKM * 2.4).toFixed(1);
+            calculate();
+        } else { alert("定位失败，请尝试简化地址"); }
     });
+}
+
+// 计费计算器逻辑
+function chPax(n) { 
+    paxCount = n; 
+    document.getElementById('p3').className=n==3?'opt-btn active':'opt-btn'; 
+    document.getElementById('p4').className=n==4?'opt-btn active':'opt-btn'; 
+    document.getElementById('v4').style.visibility=n==3?'hidden':'visible'; 
+    calculate(); 
+}
+function chMode(m) { 
+    modeType = m; 
+    document.getElementById('mS').className=m=='seg'?'opt-btn active':'opt-btn'; 
+    document.getElementById('mA').className=m=='avg'?'opt-btn active':'opt-btn'; 
+    calculate(); 
+}
+
+function calculate() {
+    if(!totalKM) return;
+    const rate = totalPrice / totalKM;
+    let html = `<div class="res-line" style="color:var(--blue)"><span>全程 ${totalKM}km</span><b>￥${totalPrice}</b></div>`;
+    
+    if(modeType === 'avg') {
+        const per = totalPrice / paxCount;
+        for(let i=1; i<=paxCount; i++) html += `<div class="res-line"><span>客 ${i}</span><b>${per.toFixed(2)} 元</b></div>`;
+    } else {
+        let items = [];
+        for(let i=1; i<=paxCount; i++) {
+            let v = parseFloat(document.getElementById('v'+i).value) || 0;
+            items.push({ id: i, dist: Math.min(v, totalKM) });
+        }
+        let sorted = [...items].sort((a,b) => a.dist - b.dist);
+        let resMap = {}; items.forEach(x => resMap[x.id] = 0);
+        let last = 0, count = paxCount;
+        for (let i = 0; i < sorted.length; i++) {
+            let seg = sorted[i].dist - last;
+            if (seg > 0) {
+                let cost = (seg * rate) / count;
+                sorted.slice(i).forEach(x => resMap[x.id] += cost);
+            }
+            last = sorted[i].dist;
+            count--;
+        }
+        items.forEach(x => { html += `<div class="res-line"><span>客 ${x.id}</span><b>${resMap[x.id].toFixed(2)} 元</b></div>`; });
+    }
+    document.getElementById('final-res').innerHTML = html;
 }
 
 window.onload = init;
