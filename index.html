@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>广东高速费分账-手动输入版 v60.0</title>
+    <title>广东高速费分账-布局优化版 v61.0</title>
     
     <script type="text/javascript">
         window._AMapSecurityConfig = { securityJsCode: '17a5dd8e857eed4de7532d2c61b03872', }; 
@@ -14,9 +14,8 @@
         :root { --blue: #007AFF; --green: #34C759; --bg: #f2f2f7; --red: #FF3B30; --gray: #8e8e93; }
         body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 10px; font-size: 14px; }
         
-        /* 地图高度切换 */
         #map-container { position: relative; width: 100%; height: 180px; border-radius: 16px; border: 1px solid #ccc; margin-bottom: 12px; transition: 0.3s; overflow: hidden; background: #fff; }
-        #map-container.fullscreen { height: 75vh; position: sticky; top: 0; z-index: 999; margin: -10px -10px 12px -10px; width: calc(100% + 20px); border-radius: 0 0 16px 16px; }
+        #map-container.fullscreen { height: 70vh; position: sticky; top: 0; z-index: 999; margin: -10px -10px 12px -10px; width: calc(100% + 20px); border-radius: 0 0 16px 16px; }
         #main-map { width: 100%; height: 100%; }
         .fs-btn { position: absolute; top: 8px; right: 8px; z-index: 100; background: rgba(255,255,255,0.95); border: 1px solid #ccc; padding: 6px 12px; border-radius: 8px; font-size: 13px; font-weight: bold; color: var(--blue); }
 
@@ -28,22 +27,25 @@
         .kw-input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
         .btn-loc { padding: 0 12px; border: none; border-radius: 8px; color: white; background: var(--green); font-weight: bold; }
 
-        .config-row { display: flex; gap: 8px; margin: 12px 0; }
-        .opt-btn { flex: 1; padding: 12px; border: 1.5px solid #d1d1d6; border-radius: 12px; text-align: center; font-size: 14px; background: white; font-weight: bold; }
+        .btn-action { width: 100%; padding: 16px; border: none; border-radius: 14px; color: white; font-weight: bold; font-size: 17px; margin-top: 10px; }
+        .bg-blue { background: var(--blue); }
+        .bg-red { background: var(--red); box-shadow: 0 4px 12px rgba(255,59,48,0.2); }
+
+        /* 状态显示框 - 永久显示 */
+        .status-box { padding: 12px; background: #f8f9fa; border-radius: 12px; border: 1px solid #eee; margin-top: 8px; margin-bottom: 12px; min-height: 40px; }
+        
+        .config-row { display: flex; gap: 8px; margin: 10px 0; }
+        .opt-btn { flex: 1; padding: 10px; border: 1.5px solid #d1d1d6; border-radius: 10px; text-align: center; font-size: 13px; background: white; font-weight: bold; }
         .opt-btn.active { border-color: var(--blue); background: #f2f8ff; color: var(--blue); }
 
-        /* 还原手动输入布局：一排四个客人的输入框 */
         .pax-inputs { display: flex; gap: 6px; margin: 15px 0; }
         .pax-box { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
-        .pax-box span { font-size: 12px; font-weight: bold; color: #555; }
-        .pax-num-input { width: 100%; padding: 12px 0; border: 1px solid #ccc; border-radius: 10px; text-align: center; font-size: 16px; background: #fff; -moz-appearance: textfield; }
+        .pax-box span { font-size: 11px; font-weight: bold; color: #777; }
+        .pax-num-input { width: 100%; padding: 12px 0; border: 1px solid #ccc; border-radius: 10px; text-align: center; font-size: 16px; background: #fff; }
         
-        .btn-action { width: 100%; padding: 16px; border: none; border-radius: 14px; color: white; font-weight: bold; font-size: 17px; margin-bottom: 10px; }
-        .bg-blue { background: var(--blue); }
-        .bg-red { background: var(--red); box-shadow: 0 4px 12px rgba(255,59,48,0.25); }
-
-        .res-box { padding: 15px; background: #fff; border-radius: 16px; border: 2px solid var(--blue); margin-top: 15px; }
-        .res-line { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #eee; font-weight: bold; font-size: 16px; }
+        /* 账单结果框 - 永久显示 */
+        .res-box { padding: 15px; background: #fff; border-radius: 16px; border: 2px solid var(--blue); margin-top: 8px; min-height: 100px; }
+        .res-line { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #eee; font-weight: bold; font-size: 15px; }
     </style>
 </head>
 <body>
@@ -56,12 +58,15 @@
 <div class="panel">
     <div class="loc-row">
         <div class="sel-group"><select id="s-city"></select><select id="s-dist"></select><select id="s-town"></select></div>
-        <div class="kw-group"><input type="text" id="s-kw" class="kw-input" placeholder="起点地标..."><button class="btn-loc" onclick="confirmPos('s')">定位</button></div>
+        <div class="kw-group"><input type="text" id="s-kw" class="kw-input" placeholder="输入起点..."><button class="btn-loc" onclick="confirmPos('s')">定位</button></div>
     </div>
     <div class="loc-row">
         <div class="sel-group"><select id="e-city"></select><select id="e-dist"></select><select id="e-town"></select></div>
-        <div class="kw-group"><input type="text" id="e-kw" class="kw-input" placeholder="终点地标..."><button class="btn-loc" onclick="confirmPos('e')">定位</button></div>
+        <div class="kw-group"><input type="text" id="e-kw" class="kw-input" placeholder="输入终点..."><button class="btn-loc" onclick="confirmPos('e')">定位</button></div>
     </div>
+
+    <button class="btn-action bg-blue" onclick="calculateRoute()">1. 获取高速过路费</button>
+    <div id="status-display" class="status-box" style="text-align:center; color:#999;">等待路线规划...</div>
 
     <div class="config-row">
         <div class="opt-btn" id="p3" onclick="chPax(3)">3人模式</div>
@@ -80,10 +85,8 @@
         <div class="opt-btn" id="mA" onclick="chMode('avg')">人头平摊</div>
     </div>
 
-    <button class="btn-action bg-blue" onclick="calculateRoute()">1. 获取高速过路费</button>
-    <button class="btn-action bg-red" onclick="finalCalc()">2. 最终核算账单</button>
-
-    <div id="final-res" class="res-box" style="text-align:center; color:#999;">请先执行上述步骤</div>
+    <button class="btn-action bg-red" onclick="finalCalc()">2. 最终核对账单</button>
+    <div id="final-res" class="res-box" style="text-align:center; color:#999;">请先输入里程并点击核对</div>
 </div>
 
 <script>
@@ -159,8 +162,14 @@ function calculateRoute() {
             const r = result.routes[0];
             totalKM = parseFloat((r.distance / 1000).toFixed(1));
             totalTolls = parseFloat(r.tolls || 0).toFixed(2);
-            document.getElementById('final-res').innerHTML = `<div style="color:var(--green); font-weight:bold;">✅ 已获取高速费：￥${totalTolls}</div><div>请输入里程后点击下方核算按钮</div>`;
-        } else { alert("获取失败，请重试"); }
+            document.getElementById('status-display').innerHTML = `
+                <span style="color:var(--blue); font-weight:bold;">全程: ${totalKM}km</span> 
+                &nbsp;&nbsp;&nbsp; 
+                <span style="color:var(--red); font-weight:bold;">路费: ￥${totalTolls}</span>
+            `;
+        } else { 
+            document.getElementById('status-display').innerHTML = `<span style="color:var(--red);">获取失败，请确认定位！</span>`;
+        }
     });
 }
 
@@ -168,7 +177,7 @@ function chPax(n) {
     paxCount = n; 
     document.getElementById('p3').className=n==3?'opt-btn active':'opt-btn'; 
     document.getElementById('p4').className=n==4?'opt-btn active':'opt-btn'; 
-    document.getElementById('item-v4').style.display=n==3?'none':'flex'; 
+    document.getElementById('item-v4').style.visibility=n==3?'hidden':'visible'; 
 }
 
 function chMode(m) { 
@@ -178,9 +187,9 @@ function chMode(m) {
 }
 
 function finalCalc() {
-    if(!totalKM) return alert("请先点击蓝按钮获取高速费数据！");
+    if(!totalKM) return alert("请先获取高速费数据！");
     const rate = totalTolls / totalKM;
-    let html = `<div class="res-line" style="color:var(--blue)"><span>全程 ${totalKM}km</span><span>路费 ￥${totalTolls}</span></div>`;
+    let html = ``;
     
     if(modeType === 'avg') {
         const per = totalTolls / paxCount;
