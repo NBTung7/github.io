@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>广东计费旗舰版 v52.0</title>
+    <title>广东过路费分账系统 v53.0</title>
     
     <script type="text/javascript">
         window._AMapSecurityConfig = { securityJsCode: '17a5dd8e857eed4de7532d2c61b03872', }; 
@@ -18,17 +18,15 @@
 
         .panel { background: white; border-radius: 20px; padding: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; }
         
-        /* 地址输入区 */
         .loc-section { margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #f0f0f0; }
         .row { display: flex; gap: 4px; margin-bottom: 6px; }
-        select { flex: 1; padding: 10px 2px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; background: #fafafa; }
+        select { flex: 1; padding: 10px 2px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; background: #fafafa; -webkit-appearance: none; }
         .input-group { display: flex; gap: 6px; }
         .kw-input { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; outline: none; }
         .btn-loc { padding: 0 12px; border: none; border-radius: 8px; color: white; background: var(--green); font-size: 13px; font-weight: bold; }
 
         .btn-main { width: 100%; padding: 16px; border: none; border-radius: 14px; color: white; font-weight: bold; font-size: 18px; background: var(--blue); margin: 10px 0; }
         
-        /* 计费配置区 */
         .opt-row { display: flex; gap: 6px; margin: 10px 0; }
         .opt-btn { flex: 1; padding: 10px; border: 1.5px solid #d1d1d6; border-radius: 10px; text-align: center; font-size: 13px; background: white; font-weight: bold; }
         .opt-btn.active { border-color: var(--blue); background: #f2f8ff; color: var(--blue); }
@@ -36,7 +34,6 @@
         #pax-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
         #pax-inputs input { border-radius: 10px; border: 1px solid #eee; padding: 12px; width: 100%; box-sizing: border-box; font-size: 14px; background: #fafafa; }
         
-        /* 结果面板 */
         .res-box { padding: 15px; background: #fff; border-radius: 15px; border: 2px solid var(--blue); margin-top: 15px; }
         .res-line { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #eee; font-size: 16px; font-weight: bold; }
         .res-line:last-child { border-bottom: none; }
@@ -54,7 +51,7 @@
             <select id="s-town"><option value="">镇/街</option></select>
         </div>
         <div class="input-group">
-            <input type="text" id="s-kw" class="kw-input" placeholder="起点详细地址...">
+            <input type="text" id="s-kw" class="kw-input" placeholder="输入起点详细地址...">
             <button class="btn-loc" onclick="confirmPos('s')">📍 定位</button>
         </div>
     </div>
@@ -66,17 +63,17 @@
             <select id="e-town"><option value="">镇/街</option></select>
         </div>
         <div class="input-group">
-            <input type="text" id="e-kw" class="kw-input" placeholder="终点详细地址...">
+            <input type="text" id="e-kw" class="kw-input" placeholder="输入终点详细地址...">
             <button class="btn-loc" onclick="confirmPos('e')">📍 定位</button>
         </div>
     </div>
     
-    <button class="btn-main" onclick="calculateRoute()">🔍 计算路线并获取数据</button>
+    <button class="btn-main" onclick="calculateRoute()">🔍 获取官方过路费</button>
 
     <div class="opt-row">
         <div class="opt-btn" id="p3" onclick="chPax(3)">3人</div>
         <div class="opt-btn active" id="p4" onclick="chPax(4)">4人</div>
-        <div class="opt-btn active" id="mS" onclick="chMode('seg')">分段计费</div>
+        <div class="opt-btn active" id="mS" onclick="chMode('seg')">里程分段</div>
         <div class="opt-btn" id="mA" onclick="chMode('avg')">人头平摊</div>
     </div>
 
@@ -87,12 +84,12 @@
         <input type="number" id="v4" placeholder="客4里程(km)" oninput="finalCalc()">
     </div>
 
-    <div id="final-res" class="res-box" style="text-align:center; color:#999;">等待规划路径...</div>
+    <div id="final-res" class="res-box" style="text-align:center; color:#999;">请先确认起点与终点</div>
 </div>
 
 <script>
 let map, ds, geo, drv;
-let totalKM = 0, totalPrice = 0, paxCount = 4, modeType = 'seg';
+let totalKM = 0, totalTolls = 0, paxCount = 4, modeType = 'seg';
 let markers = { s: null, e: null };
 
 window.onload = function() {
@@ -141,7 +138,7 @@ function confirmPos(p) {
     geo.getLocation(addr, (status, result) => {
         if (status === 'complete' && result.geocodes.length) {
             setMarker(p, result.geocodes[0].location);
-        } else { alert("定位失败，请尝试精简地址"); }
+        } else { alert("定位失败，请输入更精准的地址或点击下拉建议"); }
     });
 }
 
@@ -155,19 +152,25 @@ function setMarker(p, loc) {
 function calculateRoute() {
     const getAddr = (p) => `广东省${document.getElementById(p+'-city').value}${document.getElementById(p+'-dist').value}${document.getElementById(p+'-town').value}${document.getElementById(p+'-kw').value}`;
     if(drv) drv.clear();
-    drv = new AMap.Driving({ map: map, policy: AMap.DrivingPolicy.LEAST_TIME });
+    
+    // 使用高速优先策略以获取最准确的过路费数据
+    drv = new AMap.Driving({ 
+        map: map, 
+        policy: AMap.DrivingPolicy.LEAST_FEE 
+    });
+
     drv.search([{keyword: getAddr('s')}, {keyword: getAddr('e')}], (status, result) => {
         if (status === 'complete') {
             const r = result.routes[0];
             totalKM = parseFloat((r.distance / 1000).toFixed(1));
-            totalPrice = (parseFloat(r.tolls || 0) + totalKM * 2.4).toFixed(2);
+            // 直接采集 API 提供的过路费数据
+            totalTolls = parseFloat(r.tolls || 0).toFixed(2);
             map.setFitView();
             finalCalc();
-        } else { alert("路径规划失败，请检查定位"); }
+        } else { alert("规划失败，请确保起终点均已通过[定位]确认"); }
     });
 }
 
-// 计费计算逻辑
 function chPax(n) { 
     paxCount = n; 
     document.getElementById('p3').className=n==3?'opt-btn active':'opt-btn'; 
@@ -175,6 +178,7 @@ function chPax(n) {
     document.getElementById('v4').style.visibility=n==3?'hidden':'visible'; 
     finalCalc(); 
 }
+
 function chMode(m) { 
     modeType = m; 
     document.getElementById('mS').className=m=='seg'?'opt-btn active':'opt-btn'; 
@@ -184,12 +188,16 @@ function chMode(m) {
 
 function finalCalc() {
     if(!totalKM) return;
-    const rate = totalPrice / totalKM;
-    let html = `<div class="res-line" style="color:var(--blue)"><span>全程 ${totalKM}km</span><b>￥${totalPrice}</b></div>`;
+    // 每一公里的路费占比
+    const rate = totalTolls / totalKM;
+    let html = `
+        <div class="res-line" style="color:var(--blue)"><span>总里程</span><b>${totalKM} km</b></div>
+        <div class="res-line" style="color:red"><span>总过路费</span><b>￥${totalTolls}</b></div>
+    `;
     
     if(modeType === 'avg') {
-        const per = totalPrice / paxCount;
-        for(let i=1; i<=paxCount; i++) html += `<div class="res-line"><span>乘客 ${i}</span><b>${per.toFixed(2)} 元</b></div>`;
+        const per = totalTolls / paxCount;
+        for(let i=1; i<=paxCount; i++) html += `<div class="res-line"><span>乘客 ${i}分摊</span><b>${per.toFixed(2)} 元</b></div>`;
     } else {
         let items = [];
         for(let i=1; i<=paxCount; i++) {
@@ -199,6 +207,7 @@ function finalCalc() {
         let sorted = [...items].sort((a,b) => a.dist - b.dist);
         let resMap = {}; items.forEach(x => resMap[x.id] = 0);
         let last = 0, count = paxCount;
+        
         for (let i = 0; i < sorted.length; i++) {
             let seg = sorted[i].dist - last;
             if (seg > 0) {
@@ -208,7 +217,7 @@ function finalCalc() {
             last = sorted[i].dist;
             count--;
         }
-        items.forEach(x => { html += `<div class="res-line"><span>乘客 ${x.id}</span><b>${resMap[x.id].toFixed(2)} 元</b></div>`; });
+        items.forEach(x => { html += `<div class="res-line"><span>乘客 ${x.id}分摊</span><b>${resMap[x.id].toFixed(2)} 元</b></div>`; });
     }
     document.getElementById('final-res').innerHTML = html;
 }
