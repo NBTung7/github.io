@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>广东计费终极修复版 v50.0</title>
+    <title>广东计费单图稳健版 v51.0</title>
     
     <script type="text/javascript">
         window._AMapSecurityConfig = { securityJsCode: '17a5dd8e857eed4de7532d2c61b03872', }; 
@@ -11,90 +11,93 @@
     <script type="text/javascript" src="https://webapi.amap.com/maps?v=2.0&key=1e1827b3250f2fc8380020d354978d39&plugin=AMap.Driving,AMap.DistrictSearch,AMap.AutoComplete,AMap.Geocoder"></script>
 
     <style>
-        :root { --blue: #007AFF; --bg: #f2f2f7; }
+        :root { --blue: #007AFF; --green: #34C759; --bg: #f2f2f7; }
         body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 10px; }
-        #main-map { width: 100%; height: 180px; border-radius: 16px; border: 1px solid #ccc; margin-bottom: 8px; background: #fff; }
-        .sub-row { display: flex; gap: 8px; height: 120px; margin-bottom: 12px; }
-        .sub-map-wrapper { flex: 1; position: relative; border-radius: 12px; border: 1px solid #ccc; overflow: hidden; background: #fff; }
-        .map-label { position: absolute; top: 0; left: 0; z-index: 10; background: rgba(0,0,0,0.6); color: white; font-size: 10px; padding: 2px 6px; border-bottom-right-radius: 8px; }
+        
+        /* 大地图容器 */
+        #main-map { width: 100%; height: 220px; border-radius: 16px; border: 1px solid #ccc; margin-bottom: 12px; background: #fff; }
+
         .panel { background: white; border-radius: 20px; padding: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        .select-row { display: flex; gap: 4px; margin-bottom: 8px; }
-        select { flex: 1; padding: 12px 2px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; background: #fafafa; }
-        .kw-input { width: 100%; padding: 14px; border: 1px solid #ddd; border-radius: 10px; font-size: 15px; box-sizing: border-box; margin-bottom: 15px; }
-        .btn-calc { width: 100%; padding: 16px; border: none; border-radius: 14px; color: white; font-weight: bold; font-size: 18px; background: var(--blue); }
-        .res-box { padding: 15px; background: #fff; border-radius: 15px; border: 2px solid var(--blue); margin-top: 15px; }
-        .res-line { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #eee; font-size: 16px; font-weight: bold; }
+        
+        .loc-section { margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #eee; }
+        .row { display: flex; gap: 4px; margin-bottom: 8px; }
+        select { flex: 1; padding: 10px 2px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; }
+        
+        .input-group { display: flex; gap: 8px; }
+        .kw-input { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; outline: none; }
+        .btn-loc { padding: 0 15px; border: none; border-radius: 8px; color: white; background: var(--green); font-size: 13px; white-space: nowrap; font-weight: bold; }
+
+        .btn-main { width: 100%; padding: 16px; border: none; border-radius: 14px; color: white; font-weight: bold; font-size: 18px; background: var(--blue); margin-top: 10px; }
+        
+        .res-box { padding: 15px; background: #fff; border-radius: 15px; border: 2px solid var(--blue); margin-top: 15px; display: none; }
+        .res-line { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #eee; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div id="main-map"></div>
-<div class="sub-row">
-    <div class="sub-map-wrapper"><span class="map-label">起点</span><div id="s-map" style="height:100%"></div></div>
-    <div class="sub-map-wrapper"><span class="map-label">终点</span><div id="e-map" style="height:100%"></div></div>
-</div>
 
 <div class="panel">
-    <div class="select-row">
-        <select id="s-city"><option value="">市</option></select>
-        <select id="s-dist"><option value="">区</option></select>
-        <select id="s-town"><option value="">镇/街</option></select>
+    <div class="loc-section">
+        <div class="row">
+            <select id="s-city"><option value="">市</option></select>
+            <select id="s-dist"><option value="">区</option></select>
+            <select id="s-town"><option value="">镇/街</option></select>
+        </div>
+        <div class="input-group">
+            <input type="text" id="s-kw" class="kw-input" placeholder="输入起点详细地址...">
+            <button class="btn-loc" onclick="confirmPos('s')">📍 定位</button>
+        </div>
     </div>
-    <input type="text" id="s-kw" class="kw-input" placeholder="输入起点关键词...">
 
-    <div class="select-row">
-        <select id="e-city"><option value="">市</option></select>
-        <select id="e-dist"><option value="">区</option></select>
-        <select id="e-town"><option value="">镇/街</option></select>
+    <div class="loc-section">
+        <div class="row">
+            <select id="e-city"><option value="">市</option></select>
+            <select id="e-dist"><option value="">区</option></select>
+            <select id="e-town"><option value="">镇/街</option></select>
+        </div>
+        <div class="input-group">
+            <input type="text" id="e-kw" class="kw-input" placeholder="输入终点详细地址...">
+            <button class="btn-loc" onclick="confirmPos('e')">📍 定位</button>
+        </div>
     </div>
-    <input type="text" id="e-kw" class="kw-input" placeholder="输入终点关键词...">
     
-    <button class="btn-calc" onclick="runRoute()">🔍 开始规划并计费</button>
-    <div id="final-res" class="res-box" style="text-align:center;color:#999;">等待输入地址...</div>
+    <button class="btn-main" onclick="calculateRoute()">🔍 计算路径并计费</button>
+    
+    <div id="final-res" class="res-box"></div>
 </div>
 
 <script>
-let maps = {}, ds, geo, drv;
+let map, ds, geo, drv;
+let markers = { s: null, e: null };
 
-// 1. 确保 DOM 加载后初始化
 window.onload = function() {
-    setTimeout(init, 300); // 延迟 300ms 避开手机端加载高峰
-};
-
-function init() {
-    // 初始化地图实例
-    maps.main = new AMap.Map('main-map', { zoom: 10 });
-    maps.s = new AMap.Map('s-map', { zoom: 14 });
-    maps.e = new AMap.Map('e-map', { zoom: 14 });
-
+    map = new AMap.Map('main-map', { zoom: 10 });
     ds = new AMap.DistrictSearch({ subdistrict: 1 });
     geo = new AMap.Geocoder();
 
-    // 绑定事件：直接监听所有 select 的改变
-    ['s', 'e'].forEach(p => {
-        document.getElementById(p + '-city').onchange = (e) => loadSub(p, e.target.value, 'city');
-        document.getElementById(p + '-dist').onchange = (e) => loadSub(p, e.target.value, 'district');
-        document.getElementById(p + '-town').onchange = () => forceJump(p);
-        
-        // 模糊搜索
-        const auto = new AMap.AutoComplete({ input: p + '-kw', city: '广东' });
-        auto.on('select', (e) => {
-            if(e.poi && e.poi.location) {
-                maps[p].setZoomAndCenter(15, e.poi.location);
-                maps[p].clearMap();
-                new AMap.Marker({ position: e.poi.location, map: maps[p] });
-            }
-        });
-    });
-
-    // 载入广东省
+    // 载入广东
     ds.search('广东省', (status, res) => {
         if(status === 'complete') {
             const list = res.districtList[0].districtList;
             fill('s-city', list); fill('e-city', list);
         }
     });
-}
+
+    // 绑定下拉框联动
+    ['s','e'].forEach(p => {
+        document.getElementById(p+'-city').onchange = (e) => loadNext(p, e.target.value, 'city');
+        document.getElementById(p+'-dist').onchange = (e) => loadNext(p, e.target.value, 'district');
+        
+        // 模糊搜索提示
+        const auto = new AMap.AutoComplete({ input: p + '-kw', city: '广东' });
+        auto.on('select', (e) => {
+            if(e.poi && e.poi.location) {
+                setMarker(p, e.poi.location);
+            }
+        });
+    });
+};
 
 function fill(id, list) {
     const el = document.getElementById(id);
@@ -105,7 +108,7 @@ function fill(id, list) {
     });
 }
 
-function loadSub(p, val, level) {
+function loadNext(p, val, level) {
     if(!val) return;
     ds.setLevel(level);
     ds.search(val, (status, res) => {
@@ -114,52 +117,66 @@ function loadSub(p, val, level) {
             if(level === 'city') { fill(p+'-dist', list); fill(p+'-town', null); }
             else { fill(p+'-town', list); }
         }
-        forceJump(p); // 关键：每选一级都强制跳一次
     });
 }
 
-// 核心修复函数：强制跳转
-function forceJump(p) {
+// 核心功能：手动确认位置
+function confirmPos(p) {
     const c = document.getElementById(p+'-city').value;
     const d = document.getElementById(p+'-dist').value;
     const t = document.getElementById(p+'-town').value;
-    if(!c) return;
-
-    const address = `广东省${c}${d}${t}`;
+    const k = document.getElementById(p+'-kw').value;
     
-    // 强制清理后再定位，解决“不移动”的问题
-    geo.getLocation(address, function(status, result) {
+    if(!c) return alert("请先选择城市");
+    
+    const address = `广东省${c}${d}${t}${k}`;
+    geo.getLocation(address, (status, result) => {
         if (status === 'complete' && result.geocodes.length) {
             const loc = result.geocodes[0].location;
-            console.log("定位成功:", p, address, loc); // 调试用
-            maps[p].clearMap();
-            maps[p].setZoomAndCenter(14, loc); // 强制设置缩放和中心
-            new AMap.Marker({ position: loc, map: maps[p] });
+            setMarker(p, loc);
+        } else {
+            alert("无法定位该地址，请尝试精简关键词");
         }
     });
 }
 
-function runRoute() {
-    const getA = (p) => {
+function setMarker(p, loc) {
+    if(markers[p]) map.remove(markers[p]);
+    markers[p] = new AMap.Marker({
+        position: loc,
+        label: { content: p === 's' ? '起点' : '终点', direction: 'top' }
+    });
+    map.add(markers[p]);
+    map.setZoomAndCenter(14, loc);
+}
+
+function calculateRoute() {
+    const getFullAddr = (p) => {
         const c = document.getElementById(p+'-city').value, d = document.getElementById(p+'-dist').value,
               t = document.getElementById(p+'-town').value, k = document.getElementById(p+'-kw').value;
         return `广东省${c}${d}${t}${k}`;
     };
 
     if(drv) drv.clear();
-    drv = new AMap.Driving({ map: maps.main, policy: AMap.DrivingPolicy.LEAST_TIME });
+    drv = new AMap.Driving({ map: map, policy: AMap.DrivingPolicy.LEAST_TIME });
     
-    drv.search([{keyword: getA('s')}, {keyword: getA('e')}], (status, result) => {
+    drv.search([{keyword: getFullAddr('s')}, {keyword: getFullAddr('e')}], (status, result) => {
+        const resBox = document.getElementById('final-res');
         if (status === 'complete') {
             const r = result.routes[0];
             const km = (r.distance / 1000).toFixed(1);
             const total = (parseFloat(r.tolls || 0) + km * 2.4).toFixed(2);
-            document.getElementById('final-res').innerHTML = `
-                <div class="res-line" style="color:var(--blue)"><span>里程</span><b>${km} km</b></div>
-                <div class="res-line"><span>路费</span><b>￥${r.tolls || 0}</b></div>
-                <div class="res-line" style="color:red"><span>总计</span><b>￥${total}</b></div>
+            resBox.style.display = 'block';
+            resBox.innerHTML = `
+                <div class="res-line" style="color:var(--blue)"><span>全程里程</span><b>${km} km</b></div>
+                <div class="res-line"><span>路桥费</span><b>￥${r.tolls || 0}</b></div>
+                <div class="res-line" style="color:red; font-size:18px"><span>预估总计</span><b>￥${total}</b></div>
             `;
-        } else { alert("规划失败，请确保起终点地址正确"); }
+            // 自动缩放以显示全路程
+            map.setFitView();
+        } else {
+            alert("规划失败，请确保起终点均已通过[定位]按钮确认");
+        }
     });
 }
 </script>
