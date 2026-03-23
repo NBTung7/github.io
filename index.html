@@ -1,34 +1,221 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Autocomplete Search</title>
-    <script src="https://webapi.amap.com/maps?v=1.4.15&key=YOUR_API_KEY"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>高德智能搜索结算系统 v31.0</title>
+    
+    <script type="text/javascript">
+        window._AMapSecurityConfig = { securityJsCode: 'b559741e31149204588581114b731b79', }; 
+    </script>
+    <script type="text/javascript" src="https://webapi.amap.com/maps?v=2.0&key=d40b46f59c6ac01013fb25c663857fff&plugin=AMap.Driving,AMap.AutoComplete"></script>
+
+    <style>
+        :root { --amap-blue: #007AFF; --ios-bg: #f2f2f7; --danger: #ff3b30; --success: #34c759; }
+        body { font-family: -apple-system, sans-serif; background: var(--ios-bg); margin: 0; padding: 10px; -webkit-tap-highlight-color: transparent; }
+        .container { max-width: 600px; margin: auto; }
+
+        .map-wrap { width: 100%; height: 200px; background: #fff; border-radius: 18px; position: relative; overflow: hidden; border: 1px solid #d1d1d6; margin-bottom: 12px; }
+        #amap-box { width: 100%; height: 100%; }
+
+        .panel { background: white; border-radius: 24px; padding: 18px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); }
+        
+        /* 搜索框样式优化 */
+        .input-group { position: relative; margin-bottom: 10px; }
+        .input-group input { width: 100%; padding: 14px; border: 1px solid #e5e5ea; border-radius: 12px; font-size: 16px; box-sizing: border-box; outline: none; background: #f9f9fb; }
+        .input-group input:focus { border-color: var(--amap-blue); background: #fff; }
+
+        /* 高德搜索联想词列表的样式修正 */
+        .amap-sug-result { border-radius: 12px; border: 1px solid #eee; box-shadow: 0 4px 15px rgba(0,0,0,0.1); z-index: 9999 !important; }
+
+        .btn-run { width: 100%; padding: 16px; border: none; border-radius: 14px; color: white; font-weight: bold; font-size: 17px; background: var(--amap-blue); cursor: pointer; margin-bottom: 15px; }
+
+        /* 方案列表 */
+        .route-options { display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px; }
+        .route-item { padding: 12px; border: 2px solid #eee; border-radius: 12px; cursor: pointer; position: relative; background: #fff; }
+        .route-item.active { border-color: var(--amap-blue); background: #f2f8ff; }
+        .route-item .tag { position: absolute; right: 10px; top: 10px; font-size: 10px; padding: 2px 6px; border-radius: 4px; color: white; }
+        .tag-toll { background: var(--danger); }
+        .tag-free { background: var(--success); }
+        .route-main { font-weight: bold; font-size: 15px; }
+
+        .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 15px; text-align: center; }
+        .stat-box { background: #f8f8fa; padding: 10px; border-radius: 12px; border: 1px solid #efeff4; }
+        .stat-box span { font-size: 10px; color: #8e8e93; display: block; }
+        .stat-box b { font-size: 16px; }
+
+        /* 模式切换 */
+        .opt-row { display: flex; gap: 6px; margin-bottom: 8px; }
+        .opt-btn { flex: 1; padding: 10px; border: 1.5px solid #d1d1d6; border-radius: 10px; text-align: center; font-size: 13px; background: white; font-weight: bold; }
+        .opt-btn.active { border-color: var(--amap-blue); background: #f2f8ff; color: var(--amap-blue); }
+        
+        #pax-inputs input { margin-bottom: 8px; border-radius: 10px; border: 1px solid #eee; padding: 12px; width: 100%; box-sizing: border-box; }
+        .res-panel { margin-top: 15px; padding: 15px; background: #f0f9ff; border-radius: 15px; border: 1px solid #d0e7ff; }
+        .res-line { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #c0d9f0; font-size: 17px; }
+    </style>
 </head>
 <body>
-    <h1>Search for Departure and Destination</h1>
-    <form>
-        <label for="departure">Departure:</label>
-        <input type="text" id="departure" name="departure" autocomplete="on">
 
-        <label for="destination">Destination:</label>
-        <input type="text" id="destination" name="destination" autocomplete="on">
+<div class="container">
+    <div class="map-wrap"><div id="amap-box"></div></div>
 
-        <input type="submit" value="Search">
-    </form>
+    <div class="panel">
+        <div class="input-group">
+            <input type="text" id="sInput" placeholder="📍 搜索起点..." autocomplete="off">
+        </div>
+        <div class="input-group">
+            <input type="text" id="eInput" placeholder="🏁 搜索终点..." autocomplete="off">
+        </div>
+        
+        <button class="btn-run" id="mainBtn" onclick="planAll()">🔍 搜索路径方案</button>
 
-    <script>
-        const departureInput = document.getElementById('departure');
-        const destinationInput = document.getElementById('destination');
+        <div id="routeList" class="route-options"></div>
 
-        // Initialize Amap Autocomplete
-        const autoComplete = new AMap.Autocomplete({
-            input: 'departure'
+        <div class="stats">
+            <div class="stat-box"><span>里程(km)</span><b id="v-dist">0.0</b></div>
+            <div class="stat-box"><span>路费(元)</span><b id="v-toll">0.0</b></div>
+            <div class="stat-box"><span>结算总价</span><b id="v-price" style="color:var(--danger)">0</b></div>
+        </div>
+
+        <div class="opt-row">
+            <div class="opt-btn" id="p3" onclick="chPax(3)">3人</div>
+            <div class="opt-btn active" id="p4" onclick="chPax(4)">4人</div>
+            <div class="opt-btn active" id="mS" onclick="chMode('seg')">分段</div>
+            <div class="opt-btn" id="mA" onclick="chMode('avg')">平摊</div>
+        </div>
+
+        <div id="pax-inputs">
+            <input type="number" id="v1" placeholder="乘客1里程" oninput="calculate()">
+            <input type="number" id="v2" placeholder="乘客2里程" oninput="calculate()">
+            <input type="number" id="v3" placeholder="乘客3里程" oninput="calculate()">
+            <input type="number" id="v4" placeholder="乘客4里程" oninput="calculate()">
+        </div>
+
+        <div class="res-panel"><div id="final-res" style="text-align:center;color:#999;">请选择搜索结果并规划</div></div>
+        
+        <button class="btn-run" style="background:#8e8e93; margin-top:10px; font-size: 14px; padding: 10px;" onclick="location.reload()">🔄 重置地图</button>
+    </div>
+</div>
+
+<script>
+let aMap, routesData = [], totalKM = 0, totalPrice = 0, paxCount = 4, modeType = 'seg';
+let currentRenderDriver = null;
+
+function init() {
+    aMap = new AMap.Map('amap-box', { zoom: 14 });
+
+    // --- 模糊搜索逻辑开始 ---
+    // 为起点输入框绑定联想提示
+    const autoStart = new AMap.AutoComplete({ input: "sInput" });
+    // 为终点输入框绑定联想提示
+    const autoEnd = new AMap.AutoComplete({ input: "eInput" });
+
+    // 监听搜索选中事件，选中后自动规划路径
+    autoStart.on("select", function(e) { console.log("起点已选:", e.poi.name); });
+    autoEnd.on("select", function(e) { 
+        console.log("终点已选:", e.poi.name);
+        // 如果用户选完终点，可以考虑自动触发规划
+        // planAll(); 
+    });
+    // --- 模糊搜索逻辑结束 ---
+}
+
+async function planAll() {
+    const s = document.getElementById('sInput').value, e = document.getElementById('eInput').value;
+    if(!s || !e) return alert("请先选择起终点");
+    
+    document.getElementById('mainBtn').innerText = "⚡ 正在对比方案...";
+    document.getElementById('routeList').innerHTML = "";
+    routesData = [];
+
+    const configs = [
+        { name: "极速模式", p: 32, tag: "高速", cls: "tag-toll" },
+        { name: "避开收费", p: 4, tag: "免费", cls: "tag-free" },
+        { name: "智能推荐", p: 33, tag: "避堵", cls: "tag-toll" },
+        { name: "短距优先", p: 34, tag: "近道", cls: "tag-free" }
+    ];
+
+    for (let c of configs) {
+        const drv = new AMap.Driving({ policy: c.p, avoidtolls: (c.tag === "免费" ? 1 : 0) });
+        await new Promise(resolve => {
+            drv.search([{keyword:s},{keyword:e}], (status, res) => {
+                if(status === 'complete') {
+                    const r = res.routes[0];
+                    const d = (r.distance/1000).toFixed(1);
+                    const t = r.tolls || 0;
+                    const fee = (parseFloat(t) + d * 2.4).toFixed(1); 
+                    const obj = { ...c, dist: d, toll: t, estimated: fee, id: routesData.length };
+                    routesData.push(obj);
+                    renderItem(obj);
+                }
+                resolve();
+            });
         });
-        const autoCompleteDest = new AMap.Autocomplete({
-            input: 'destination'
-        });
-    </script>
+    }
+    document.getElementById('mainBtn').innerText = "🔍 重新比价";
+    if(routesData.length > 0) selectRoute(0);
+}
+
+function renderItem(obj) {
+    const item = document.createElement('div');
+    item.className = `route-item`; item.id = `route-${obj.id}`;
+    item.onclick = () => selectRoute(obj.id);
+    item.innerHTML = `<span class="tag ${obj.cls}">${obj.tag}</span><div class="route-main">${obj.name}</div>
+        <div class="route-info"><div class="route-sub">全程 ${obj.dist}km | 路费: ${obj.toll}元</div>
+        <b style="color:var(--danger)">￥${obj.estimated}</b></div>`;
+    document.getElementById('routeList').appendChild(item);
+}
+
+function selectRoute(idx) {
+    document.querySelectorAll('.route-item').forEach(el => el.classList.remove('active'));
+    document.getElementById(`route-${idx}`).classList.add('active');
+    const data = routesData[idx];
+    totalKM = parseFloat(data.dist); totalPrice = parseFloat(data.estimated);
+
+    if(currentRenderDriver) currentRenderDriver.clear();
+    currentRenderDriver = new AMap.Driving({ map: aMap, policy: data.p, avoidtolls: (data.tag === "免费" ? 1 : 0) });
+    currentRenderDriver.search([{keyword:document.getElementById('sInput').value},{keyword:document.getElementById('eInput').value}]);
+
+    document.getElementById('v-dist').innerText = data.dist;
+    document.getElementById('v-toll').innerText = data.toll;
+    document.getElementById('v-price').innerText = data.estimated;
+    calculate();
+}
+
+function chPax(n) { paxCount = n; document.getElementById('p3').className=n==3?'opt-btn active':'opt-btn'; document.getElementById('p4').className=n==4?'opt-btn active':'opt-btn'; document.getElementById('v4').style.display=n==3?'none':'block'; calculate(); }
+function chMode(m) { modeType = m; document.getElementById('mS').className=m=='seg'?'opt-btn active':'opt-btn'; document.getElementById('mA').className=m=='avg'?'opt-btn active':'opt-btn'; document.getElementById('pax-inputs').style.display=m=='avg'?'none':'block'; calculate(); }
+
+function calculate() {
+    if(!totalKM || !totalPrice) return;
+    const rate = totalPrice / totalKM;
+    let html = "";
+    if(modeType === 'avg') {
+        const per = totalPrice / paxCount;
+        for(let i=1; i<=paxCount; i++) html += `<div class="res-line"><span>乘客 ${i}</span><b>${per.toFixed(2)} 元</b></div>`;
+    } else {
+        let items = [];
+        for(let i=1; i<=paxCount; i++) {
+            let v = parseFloat(document.getElementById('v'+i).value) || 0;
+            items.push({ id: i, dist: Math.min(v, totalKM) });
+        }
+        let sorted = [...items].sort((a,b) => a.dist - b.dist);
+        let resMap = {}; items.forEach(x => resMap[x.id] = 0);
+        let last = 0, count = paxCount;
+        for (let i = 0; i < sorted.length; i++) {
+            let seg = sorted[i].dist - last;
+            if (seg > 0) {
+                let cost = (seg * rate) / count;
+                sorted.slice(i).forEach(x => resMap[x.id] += cost);
+            }
+            last = sorted[i].dist;
+            count--;
+        }
+        items.forEach(x => { html += `<div class="res-line"><span>乘客 ${x.id} (${x.dist}km)</span><b>${resMap[x.id].toFixed(2)} 元</b></div>`; });
+    }
+    document.getElementById('final-res').innerHTML = html;
+}
+
+window.onload = init;
+</script>
 </body>
 </html>
