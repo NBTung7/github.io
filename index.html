@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>广东四级直排计费 v40.0</title>
+    <title>广东四级横排计费 v41.0</title>
     
     <script type="text/javascript">
         window._AMapSecurityConfig = { securityJsCode: 'b559741e31149204588581114b731b79', }; 
@@ -12,37 +12,50 @@
 
     <style>
         :root { --amap-blue: #007AFF; --ios-bg: #f2f2f7; --danger: #ff3b30; }
-        body { font-family: -apple-system, sans-serif; background: var(--ios-bg); margin: 0; padding: 10px; }
+        body { font-family: -apple-system, sans-serif; background: var(--ios-bg); margin: 0; padding: 10px; -webkit-font-smoothing: antialiased; }
         .container { max-width: 600px; margin: auto; }
 
-        /* 地图高度稍微缩小，腾出空间给四级菜单 */
-        .map-wrap { width: 100%; height: 160px; border-radius: 18px; overflow: hidden; border: 1px solid #d1d1d6; margin-bottom: 10px; }
+        .map-wrap { width: 100%; height: 180px; border-radius: 18px; overflow: hidden; border: 1px solid #d1d1d6; margin-bottom: 10px; }
         #amap-box { width: 100%; height: 100%; }
 
-        .panel { background: white; border-radius: 24px; padding: 18px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); }
+        .panel { background: white; border-radius: 20px; padding: 12px; box-shadow: 0 8px 25px rgba(0,0,0,0.05); }
         
-        .select-group { margin-bottom: 15px; background: #f9f9fb; padding: 12px; border-radius: 14px; border: 1px solid #e5e5ea; }
-        .select-title { font-size: 12px; color: #8e8e93; margin-bottom: 8px; font-weight: bold; display: block; }
+        .select-group { margin-bottom: 12px; background: #fff; border-bottom: 1px solid #eee; padding-bottom: 8px; }
+        .select-title { font-size: 11px; color: #888; margin-bottom: 6px; font-weight: bold; padding-left: 2px; }
         
-        /* 单列垂直布局 */
-        .cascader { display: flex; flex-direction: column; gap: 6px; }
-        select { width: 100%; padding: 12px 8px; border: 1px solid #ddd; border-radius: 10px; font-size: 14px; outline: none; background: white; -webkit-appearance: none; }
+        /* 核心：横向四个并排 */
+        .cascader { display: flex; gap: 4px; width: 100%; }
+        select { 
+            flex: 1; 
+            min-width: 0; /* 防止溢出 */
+            padding: 8px 2px; 
+            border: 1px solid #e5e5ea; 
+            border-radius: 6px; 
+            font-size: 11px; /* 较小的字体以适应横排 */
+            background: #f9f9fb;
+            outline: none;
+            -webkit-appearance: none;
+            text-align: center;
+        }
 
-        .btn-run { width: 100%; padding: 16px; border: none; border-radius: 14px; color: white; font-weight: bold; font-size: 17px; background: var(--amap-blue); cursor: pointer; margin-bottom: 15px; }
+        .btn-run { width: 100%; padding: 14px; border: none; border-radius: 12px; color: white; font-weight: bold; font-size: 16px; background: var(--amap-blue); cursor: pointer; margin: 10px 0; }
 
-        .best-route-info { background: #f2f8ff; padding: 15px; border-radius: 14px; border: 1.5px solid #d0e7ff; margin-bottom: 15px; display: none; text-align: center; }
+        .best-route-info { background: #f2f8ff; padding: 12px; border-radius: 12px; border: 1px solid #d0e7ff; margin-bottom: 12px; display: none; }
         .best-route-info div { display: flex; justify-content: space-around; }
-        .info-item { display: flex; flex-direction: column; gap: 4px; }
-        .info-label { font-size: 11px; color: #7a9cb5; }
-        .info-val { font-size: 18px; font-weight: bold; }
+        .info-item { display: flex; flex-direction: column; align-items: center; }
+        .info-label { font-size: 10px; color: #7a9cb5; }
+        .info-val { font-size: 16px; font-weight: bold; }
 
-        .opt-row { display: flex; gap: 6px; margin-bottom: 8px; }
-        .opt-btn { flex: 1; padding: 12px; border: 1.5px solid #d1d1d6; border-radius: 10px; text-align: center; font-size: 13px; background: white; font-weight: bold; }
+        .opt-row { display: flex; gap: 4px; margin-bottom: 8px; }
+        .opt-btn { flex: 1; padding: 10px; border: 1px solid #d1d1d6; border-radius: 8px; text-align: center; font-size: 12px; background: white; font-weight: bold; }
         .opt-btn.active { border-color: var(--amap-blue); background: #f2f8ff; color: var(--amap-blue); }
         
-        #pax-inputs input { margin-bottom: 8px; border-radius: 10px; border: 1px solid #eee; padding: 12px; width: 100%; box-sizing: border-box; font-size: 15px; }
-        .res-panel { margin-top: 10px; padding: 15px; background: #fff; border-radius: 15px; border: 2px solid var(--amap-blue); min-height: 50px; }
-        .res-line { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px dashed #eee; font-size: 17px; font-weight: bold; color: #003e7e; }
+        #pax-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+        #pax-inputs input { border-radius: 8px; border: 1px solid #eee; padding: 10px; width: 100%; box-sizing: border-box; font-size: 13px; background: #fafafa; }
+        
+        .res-panel { margin-top: 10px; padding: 12px; background: #fff; border-radius: 12px; border: 2px solid var(--amap-blue); }
+        .res-line { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #eee; font-size: 15px; font-weight: bold; color: #003e7e; }
+        .res-line:last-child { border-bottom: none; }
     </style>
 </head>
 <body>
@@ -52,31 +65,31 @@
 
     <div class="panel">
         <div class="select-group">
-            <span class="select-title">📍 起点 (广东省内)</span>
+            <span class="select-title">📍 起点</span>
             <div class="cascader">
-                <select id="s-city" onchange="loadSub('s', this.value, 'city')"><option>选择地级市</option></select>
-                <select id="s-dist" onchange="loadSub('s', this.value, 'district')"><option>选择区县</option></select>
-                <select id="s-street" onchange="loadSub('s', this.value, 'street')"><option>选择镇/街道</option></select>
-                <select id="s-village"><option value="">选择村/社区(可选)</option></select>
+                <select id="s-city" onchange="loadSub('s', this.value, 'city')"><option>市</option></select>
+                <select id="s-dist" onchange="loadSub('s', this.value, 'district')"><option>区</option></select>
+                <select id="s-street" onchange="loadSub('s', this.value, 'street')"><option>镇</option></select>
+                <select id="s-village"><option value="">村</option></select>
             </div>
         </div>
 
         <div class="select-group">
-            <span class="select-title">🏁 终点 (广东省内)</span>
+            <span class="select-title">🏁 终点</span>
             <div class="cascader">
-                <select id="e-city" onchange="loadSub('e', this.value, 'city')"><option>选择地级市</option></select>
-                <select id="e-dist" onchange="loadSub('e', this.value, 'district')"><option>选择区县</option></select>
-                <select id="e-street" onchange="loadSub('e', this.value, 'street')"><option>选择镇/街道</option></select>
-                <select id="e-village"><option value="">选择村/社区(可选)</option></select>
+                <select id="e-city" onchange="loadSub('e', this.value, 'city')"><option>市</option></select>
+                <select id="e-dist" onchange="loadSub('e', this.value, 'district')"><option>区</option></select>
+                <select id="e-street" onchange="loadSub('e', this.value, 'street')"><option>镇</option></select>
+                <select id="e-village"><option value="">村</option></select>
             </div>
         </div>
         
-        <button class="btn-run" onclick="planBest()">🔍 开始计算行程费用</button>
+        <button class="btn-run" onclick="planBest()">🔍 获取行程数据</button>
 
         <div id="routeInfo" class="best-route-info">
             <div>
-                <div class="info-item"><span class="info-label">全程里程</span><span class="info-val"><span id="r-dist">0</span> km</span></div>
-                <div class="info-item"><span class="info-label">高速路费</span><span class="info-val"><span id="r-toll">0</span> 元</span></div>
+                <div class="info-item"><span class="info-label">里程</span><span class="info-val"><span id="r-dist">0</span> km</span></div>
+                <div class="info-item"><span class="info-label">路费</span><span class="info-val"><span id="r-toll">0</span> 元</span></div>
             </div>
         </div>
 
@@ -88,13 +101,13 @@
         </div>
 
         <div id="pax-inputs">
-            <input type="number" id="v1" placeholder="乘客1下车公里数" oninput="calculate()">
-            <input type="number" id="v2" placeholder="乘客2下车公里数" oninput="calculate()">
-            <input type="number" id="v3" placeholder="乘客3下车公里数" oninput="calculate()">
-            <input type="number" id="v4" placeholder="乘客4下车公里数" oninput="calculate()">
+            <input type="number" id="v1" placeholder="客1km" oninput="calculate()">
+            <input type="number" id="v2" placeholder="客2km" oninput="calculate()">
+            <input type="number" id="v3" placeholder="客3km" oninput="calculate()">
+            <input type="number" id="v4" placeholder="客4km" oninput="calculate()">
         </div>
 
-        <div class="res-panel"><div id="final-res" style="text-align:center;color:#999;">等待输入数据...</div></div>
+        <div class="res-panel"><div id="final-res" style="text-align:center;color:#999;font-size:12px;">计算结果</div></div>
     </div>
 </div>
 
@@ -107,7 +120,7 @@ function init() {
     districtSearch.search('广东省', (status, result) => {
         if(status === 'complete') {
             const list = result.districtList[0].districtList;
-            fill('s-city', list, "选择地级市"); fill('e-city', list, "选择地级市");
+            fill('s-city', list, "市"); fill('e-city', list, "市");
         }
     });
 }
@@ -123,16 +136,14 @@ function fill(id, list, defaultText) {
 
 function loadSub(prefix, name, level) {
     if(!name) return;
-    const nextConfig = { 'city': { id: 'dist', txt: '选择区县' }, 'district': { id: 'street', txt: '选择镇/街道' }, 'street': { id: 'village', txt: '选择村/社区(可选)' } };
+    const nextConfig = { 'city': { id: 'dist', txt: '区' }, 'district': { id: 'street', txt: '镇' }, 'street': { id: 'village', txt: '村' } };
     const config = nextConfig[level];
-    
     districtSearch.setLevel(level);
     districtSearch.search(name, (status, result) => {
         if(status === 'complete' && result.districtList[0].districtList) {
             fill(prefix + '-' + config.id, result.districtList[0].districtList, config.txt);
-            // 联动清空
-            if(level === 'city') { fill(prefix + '-street', null, '选择镇/街道'); fill(prefix + '-village', null, '选择村/社区(可选)'); }
-            if(level === 'district') { fill(prefix + '-village', null, '选择村/社区(可选)'); }
+            if(level === 'city') { fill(prefix + '-street', null, '镇'); fill(prefix + '-village', null, '村'); }
+            if(level === 'district') { fill(prefix + '-village', null, '村'); }
         }
     });
 }
@@ -141,7 +152,7 @@ function planBest() {
     const get = (id) => document.getElementById(id).value;
     const s = `广东省${get('s-city')}${get('s-dist')}${get('s-street')}${get('s-village')}`;
     const e = `广东省${get('e-city')}${get('e-dist')}${get('e-street')}${get('e-village')}`;
-    if(!get('s-dist') || !get('e-dist')) return alert("请至少选到区县");
+    if(!get('s-dist') || !get('e-dist')) return alert("请至少选到区级");
 
     if(driving) driving.clear();
     driving = new AMap.Driving({ map: aMap, policy: AMap.DrivingPolicy.LEAST_TIME });
@@ -159,8 +170,19 @@ function planBest() {
     });
 }
 
-function chPax(n) { paxCount = n; document.getElementById('p3').className=n==3?'opt-btn active':'opt-btn'; document.getElementById('p4').className=n==4?'opt-btn active':'opt-btn'; document.getElementById('v4').style.display=n==3?'none':'block'; calculate(); }
-function chMode(m) { modeType = m; document.getElementById('mS').className=m=='seg'?'opt-btn active':'opt-btn'; document.getElementById('mA').className=m=='avg'?'opt-btn active':'opt-btn'; document.getElementById('pax-inputs').style.display=m=='avg'?'none':'block'; calculate(); }
+function chPax(n) { 
+    paxCount = n; 
+    document.getElementById('p3').className=n==3?'opt-btn active':'opt-btn'; 
+    document.getElementById('p4').className=n==4?'opt-btn active':'opt-btn'; 
+    document.getElementById('v4').style.visibility=n==3?'hidden':'visible'; 
+    calculate(); 
+}
+function chMode(m) { 
+    modeType = m; 
+    document.getElementById('mS').className=m=='seg'?'opt-btn active':'opt-btn'; 
+    document.getElementById('mA').className=m=='avg'?'opt-btn active':'opt-btn'; 
+    calculate(); 
+}
 
 function calculate() {
     if(!totalKM || !totalPrice) return;
@@ -168,7 +190,7 @@ function calculate() {
     let html = "";
     if(modeType === 'avg') {
         const per = totalPrice / paxCount;
-        for(let i=1; i<=paxCount; i++) html += `<div class="res-line"><span>乘客 ${i}</span><b>${per.toFixed(2)} 元</b></div>`;
+        for(let i=1; i<=paxCount; i++) html += `<div class="res-line"><span>客 ${i}</span><b>${per.toFixed(2)} 元</b></div>`;
     } else {
         let items = [];
         for(let i=1; i<=paxCount; i++) {
@@ -187,7 +209,7 @@ function calculate() {
             last = sorted[i].dist;
             count--;
         }
-        items.forEach(x => { html += `<div class="res-line"><span>乘客 ${x.id}</span><b>${resMap[x.id].toFixed(2)} 元</b></div>`; });
+        items.forEach(x => { html += `<div class="res-line"><span>客 ${x.id}</span><b>${resMap[x.id].toFixed(2)} 元</b></div>`; });
     }
     document.getElementById('final-res').innerHTML = html;
 }
