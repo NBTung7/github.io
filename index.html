@@ -1,239 +1,273 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>广东高速费分账-全端适配版 v64.0</title>
-    
-    <script type="text/javascript">
-        window._AMapSecurityConfig = { securityJsCode: '17a5dd8e857eed4de7532d2c61b03872', }; 
-    </script>
-    <script type="text/javascript" src="https://webapi.amap.com/maps?v=2.0&key=1e1827b3250f2fc8380020d354978d39&plugin=AMap.Driving,AMap.DistrictSearch,AMap.AutoComplete,AMap.Geocoder,AMap.ToolBar"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Clock Draft</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #202124;
+      --muted: #6f777d;
+      --paper: #f6f1e8;
+      --rim: #151515;
+      --inner: #151515;
+      --green: #6fbf73;
+      --hand: #c84d32;
+      --pin: #f6f1e8;
+    }
 
-    <style>
-        :root { --blue: #007AFF; --green: #34C759; --bg: #f2f2f7; --red: #FF3B30; --gray: #8e8e93; }
-        
-        /* 核心改进：PC端宽度限制与居中 */
-        body { 
-            font-family: -apple-system, sans-serif; 
-            background: #e5e5ea; /* PC端背景色深一点，突出中间的手机容器 */
-            margin: 0; 
-            display: flex;
-            justify-content: center;
-        }
+    * {
+      box-sizing: border-box;
+    }
 
-        /* 模拟手机容器 */
-        .app-container {
-            width: 100%;
-            max-width: 500px; /* PC端限制宽度为 500px */
-            min-height: 100vh;
-            background: var(--bg);
-            padding: 10px;
-            box-sizing: border-box;
-            box-shadow: 0 0 20px rgba(0,0,0,0.1); /* PC端增加阴影感 */
-        }
-        
-        /* 地图容器 */
-        #map-container { position: relative; width: 100%; height: 300px; border-radius: 16px; border: 1px solid #ccc; margin-bottom: 12px; transition: height 0.3s ease; overflow: hidden; background: #fff; }
-        #map-container.fullscreen { height: 70vh; position: sticky; top: 0; z-index: 999; width: 100%; border-radius: 0 0 16px 16px; margin-bottom: 12px; }
-        #main-map { width: 100%; height: 100%; }
-        .fs-btn { position: absolute; top: 8px; right: 8px; z-index: 100; background: rgba(255,255,255,0.95); border: 1px solid #ccc; padding: 6px 12px; border-radius: 8px; font-size: 13px; font-weight: bold; color: var(--blue); }
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+    }
 
-        .panel { background: white; border-radius: 20px; padding: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 15px; }
-        .loc-row { margin-bottom: 8px; border-bottom: 1px solid #f2f2f7; padding-bottom: 8px; }
-        .sel-group { display: flex; gap: 4px; margin-bottom: 4px; }
-        select { flex: 1; padding: 8px 2px; border: 1px solid #ddd; border-radius: 8px; font-size: 12px; background: #fafafa; }
-        .kw-group { display: flex; gap: 6px; }
-        .kw-input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
-        .btn-loc { padding: 0 12px; border: none; border-radius: 8px; color: white; background: var(--green); font-weight: bold; }
+    body {
+      display: grid;
+      place-items: center;
+      min-height: 100svh;
+      overflow: hidden;
+      background: linear-gradient(135deg, #e8eef0, #f7efe2 58%, #e6ece5);
+      font-family: Inter, "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
+      color: var(--ink);
+    }
 
-        .btn-action { width: 100%; padding: 16px; border: none; border-radius: 14px; color: white; font-weight: bold; font-size: 17px; margin-top: 10px; }
-        .bg-blue { background: var(--blue); }
-        .bg-red { background: var(--red); box-shadow: 0 4px 12px rgba(255,59,48,0.2); }
+    .stage {
+      display: grid;
+      place-items: center;
+      width: min(86vmin, 620px);
+      aspect-ratio: 1;
+    }
 
-        .status-box { padding: 12px; background: #f8f9fa; border-radius: 12px; border: 1px solid #eee; margin-top: 8px; margin-bottom: 12px; min-height: 40px; }
-        
-        .config-row { display: flex; gap: 8px; margin: 10px 0; }
-        .opt-btn { flex: 1; padding: 10px; border: 1.5px solid #d1d1d6; border-radius: 10px; text-align: center; font-size: 13px; background: white; font-weight: bold; cursor: pointer; }
-        .opt-btn.active { border-color: var(--blue); background: #f2f8ff; color: var(--blue); }
+    .clock {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      border: clamp(2px, .45vmin, 4px) solid var(--rim);
+      border-radius: 50%;
+      background: var(--paper);
+      box-shadow:
+        0 34px 82px rgba(38, 42, 44, .2),
+        inset 0 0 0 1px rgba(255, 255, 255, .75);
+    }
 
-        .pax-inputs { display: flex; gap: 6px; margin: 15px 0; }
-        .pax-box { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
-        .pax-box span { font-size: 11px; font-weight: bold; color: #777; }
-        .pax-num-input { width: 100%; padding: 12px 0; border: 1px solid #ccc; border-radius: 10px; text-align: center; font-size: 16px; background: #fff; }
-        
-        .res-box { padding: 15px; background: #fff; border-radius: 16px; border: 2px solid var(--blue); margin-top: 8px; min-height: 100px; }
-        .res-line { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #eee; font-weight: bold; font-size: 15px; }
-    </style>
+    .outer-arc {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: conic-gradient(var(--green) 0deg 60deg, transparent 60deg 240deg, var(--green) 240deg 300deg, transparent 300deg 360deg);
+      -webkit-mask: radial-gradient(circle closest-side, transparent 0 76%, #000 76.4% 100%);
+      mask: radial-gradient(circle closest-side, transparent 0 76%, #000 76.4% 100%);
+      z-index: 1;
+    }
+
+    .outer-fill {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: #ffffff;
+      -webkit-mask: radial-gradient(circle closest-side, transparent 0 76%, #000 76.4% 100%);
+      mask: radial-gradient(circle closest-side, transparent 0 76%, #000 76.4% 100%);
+      z-index: 0;
+    }
+
+    .middle-arc {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: conic-gradient(transparent 0deg 210deg, var(--green) 210deg 360deg);
+      -webkit-mask: radial-gradient(circle closest-side, transparent 0 52%, #000 52.4% 76%, transparent 76.4% 100%);
+      mask: radial-gradient(circle closest-side, transparent 0 52%, #000 52.4% 76%, transparent 76.4% 100%);
+      z-index: 1;
+    }
+
+    .inner-circle {
+      position: absolute;
+      inset: 24%;
+      border: clamp(2px, .45vmin, 4px) solid var(--inner);
+      border-radius: 50%;
+      background: #ffffff;
+      z-index: 2;
+    }
+
+    .middle-circle {
+      position: absolute;
+      inset: 12%;
+      border: clamp(2px, .45vmin, 4px) solid var(--inner);
+      border-radius: 50%;
+      background: transparent;
+      z-index: 2;
+    }
+
+    .number {
+      position: absolute;
+      width: 2.4em;
+      height: 2.4em;
+      display: grid;
+      place-items: center;
+      translate: -50% -50%;
+      font-size: clamp(14px, 3.6vmin, 28px);
+      font-weight: 650;
+      line-height: 1;
+      color: var(--ink);
+      font-variant-numeric: tabular-nums;
+      z-index: 3;
+    }
+
+    .n12 {
+      left: 50%;
+      top: 29.5%;
+    }
+
+    .n1 {
+      left: 60.25%;
+      top: 32.25%;
+    }
+
+    .n2 {
+      left: 67.75%;
+      top: 39.75%;
+    }
+
+    .n3 {
+      left: 70.5%;
+      top: 50%;
+    }
+
+    .n4 {
+      left: 67.75%;
+      top: 60.25%;
+    }
+
+    .n5 {
+      left: 60.25%;
+      top: 67.75%;
+    }
+
+    .n6 {
+      left: 50%;
+      top: 70.5%;
+    }
+
+    .n7 {
+      left: 39.75%;
+      top: 67.75%;
+    }
+
+    .n8 {
+      left: 32.25%;
+      top: 60.25%;
+    }
+
+    .n9 {
+      left: 29.5%;
+      top: 50%;
+    }
+
+    .n10 {
+      left: 32.25%;
+      top: 39.75%;
+    }
+
+    .n11 {
+      left: 39.75%;
+      top: 32.25%;
+    }
+
+    .hand {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: clamp(8px, 1.25vmin, 12px);
+      height: calc(50% - clamp(2px, .45vmin, 4px));
+      border-radius: 999px 999px 4px 4px;
+      background: linear-gradient(180deg, #e46042, var(--hand));
+      transform-origin: 50% 100%;
+      transform: translate(-50%, -100%) rotate(0deg);
+      box-shadow: 0 7px 20px rgba(160, 45, 25, .28);
+      z-index: 3;
+    }
+
+    .center-pin {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: clamp(18px, 4.2vmin, 34px);
+      aspect-ratio: 1;
+      border: clamp(2px, .45vmin, 4px) solid var(--rim);
+      border-radius: 50%;
+      background: var(--pin);
+      transform: translate(-50%, -50%);
+      z-index: 4;
+    }
+
+    .time-readout {
+      position: fixed;
+      left: 50%;
+      bottom: clamp(18px, 4vmin, 34px);
+      translate: -50% 0;
+      font-size: clamp(13px, 2.4vmin, 16px);
+      color: var(--muted);
+      letter-spacing: 0;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+  </style>
 </head>
 <body>
+  <main class="stage" aria-label="Clock following local time">
+    <section class="clock" aria-live="polite">
+      <div class="outer-fill" aria-hidden="true"></div>
+      <div class="outer-arc" aria-hidden="true"></div>
+      <div class="middle-arc" aria-hidden="true"></div>
+      <div class="middle-circle" aria-hidden="true"></div>
+      <div class="inner-circle" aria-hidden="true"></div>
+      <div class="number n12">12</div>
+      <div class="number n1">1</div>
+      <div class="number n2">2</div>
+      <div class="number n3">3</div>
+      <div class="number n4">4</div>
+      <div class="number n5">5</div>
+      <div class="number n6">6</div>
+      <div class="number n7">7</div>
+      <div class="number n8">8</div>
+      <div class="number n9">9</div>
+      <div class="number n10">10</div>
+      <div class="number n11">11</div>
+      <div class="hand" id="hourHand" aria-hidden="true"></div>
+      <div class="center-pin" aria-hidden="true"></div>
+    </section>
+  </main>
+  <div class="time-readout" id="timeReadout"></div>
 
-<div class="app-container">
-    <div id="map-container">
-        <button class="fs-btn" onclick="toggleFS()">全屏看路线</button>
-        <div id="main-map"></div>
-    </div>
+  <script>
+    const hourHand = document.getElementById("hourHand");
+    const timeReadout = document.getElementById("timeReadout");
 
-    <div class="panel">
-        <div class="loc-row">
-            <div class="sel-group"><select id="s-city"></select><select id="s-dist"></select><select id="s-town"></select></div>
-            <div class="kw-group"><input type="text" id="s-kw" class="kw-input" placeholder="输入起点..."><button class="btn-loc" onclick="confirmPos('s')">定位</button></div>
-        </div>
-        <div class="loc-row">
-            <div class="sel-group"><select id="e-city"></select><select id="e-dist"></select><select id="e-town"></select></div>
-            <div class="kw-group"><input type="text" id="e-kw" class="kw-input" placeholder="输入终点..."><button class="btn-loc" onclick="confirmPos('e')">定位</button></div>
-        </div>
+    function updateClock() {
+      const now = new Date();
+      const hours = now.getHours() % 12;
+      const minutes = now.getMinutes();
+      const seconds = now.getSeconds();
+      const milliseconds = now.getMilliseconds();
+      const hourAngle = ((hours + minutes / 60 + seconds / 3600 + milliseconds / 3600000) * 30);
 
-        <button class="btn-action bg-blue" onclick="calculateRoute()">1. 获取高速过路费</button>
-        <div id="status-display" class="status-box" style="text-align:center; color:#999;">等待路线规划...</div>
+      hourHand.style.transform = `translate(-50%, -100%) rotate(${hourAngle}deg)`;
+      timeReadout.textContent = now.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit"
+      });
 
-        <div class="config-row">
-            <div class="opt-btn" id="p3" onclick="chPax(3)">3人模式</div>
-            <div class="opt-btn active" id="p4" onclick="chPax(4)">4人模式</div>
-        </div>
-
-        <div class="pax-inputs">
-            <div class="pax-box"><span>客1(km)</span><input type="number" id="v1" class="pax-num-input" placeholder="0"></div>
-            <div class="pax-box"><span>客2(km)</span><input type="number" id="v2" class="pax-num-input" placeholder="0"></div>
-            <div class="pax-box"><span>客3(km)</span><input type="number" id="v3" class="pax-num-input" placeholder="0"></div>
-            <div id="item-v4" class="pax-box"><span>客4(km)</span><input type="number" id="v4" class="pax-num-input" placeholder="0"></div>
-        </div>
-
-        <div class="config-row">
-            <div class="opt-btn active" id="mS" onclick="chMode('seg')">里程分段</div>
-            <div class="opt-btn" id="mA" onclick="chMode('avg')">人头平摊</div>
-        </div>
-
-        <button class="btn-action bg-red" onclick="finalCalc()">2. 最终核对账单</button>
-        <div id="final-res" class="res-box" style="text-align:center; color:#999;">请先输入里程并点击核对</div>
-    </div>
-</div>
-
-<script>
-let map, ds, geo, drv;
-let totalKM = 0, totalTolls = 0, paxCount = 4, modeType = 'seg';
-let markers = { s: null, e: null };
-
-function toggleFS() {
-    const c = document.getElementById('map-container');
-    c.classList.toggle('fullscreen');
-    setTimeout(() => map.resize(), 310);
-}
-
-window.onload = function() {
-    map = new AMap.Map('main-map', { zoom: 10 });
-    map.addControl(new AMap.ToolBar({ position: 'RB' }));
-    ds = new AMap.DistrictSearch({ subdistrict: 1 });
-    geo = new AMap.Geocoder();
-
-    ds.search('广东省', (status, res) => {
-        if(status === 'complete') {
-            const list = res.districtList[0].districtList;
-            fill('s-city', list); fill('e-city', list);
-        }
-    });
-
-    ['s','e'].forEach(p => {
-        document.getElementById(p+'-city').onchange = (e) => loadNext(p, e.target.value, 'city');
-        document.getElementById(p+'-dist').onchange = (e) => loadNext(p, e.target.value, 'district');
-        const auto = new AMap.AutoComplete({ input: p + '-kw', city: '广东' });
-        auto.on('select', (e) => { if(e.poi.location) setMarker(p, e.poi.location, true); });
-    });
-};
-
-function fill(id, list) {
-    const el = document.getElementById(id);
-    el.innerHTML = `<option value="">${id.includes('city')?'市':(id.includes('dist')?'区':'镇')}</option>`;
-    if(list) list.sort((a,b)=>a.name.localeCompare(b.name)).forEach(i => el.innerHTML += `<option value="${i.name}">${i.name}</option>`);
-}
-
-function loadNext(p, val, level) {
-    if(!val) return;
-    ds.setLevel(level);
-    ds.search(val, (status, res) => {
-        if(status === 'complete') {
-            const list = res.districtList[0].districtList;
-            if(level === 'city') { fill(p+'-dist', list); fill(p+'-town', null); }
-            else { fill(p+'-town', list); }
-        }
-    });
-}
-
-function confirmPos(p) {
-    const addr = `广东省${document.getElementById(p+'-city').value}${document.getElementById(p+'-dist').value}${document.getElementById(p+'-town').value}${document.getElementById(p+'-kw').value}`;
-    geo.getLocation(addr, (status, result) => {
-        if (status === 'complete' && result.geocodes.length) setMarker(p, result.geocodes[0].location, true);
-    });
-}
-
-function setMarker(p, loc, zoomToPoint) {
-    if(markers[p]) map.remove(markers[p]);
-    markers[p] = new AMap.Marker({ position: loc, label: { content: p==='s'?'起':'终', direction:'top' }});
-    map.add(markers[p]);
-    if(zoomToPoint) map.setZoomAndCenter(16, loc);
-}
-
-function calculateRoute() {
-    if(!markers.s || !markers.e) return alert("请先定位！");
-    if(drv) drv.clear();
-    drv = new AMap.Driving({ map: map, policy: 4 });
-    drv.search(markers.s.getPosition(), markers.e.getPosition(), (status, result) => {
-        if (status === 'complete') {
-            const r = result.routes[0];
-            totalKM = parseFloat((r.distance / 1000).toFixed(1));
-            totalTolls = parseFloat(r.tolls || 0).toFixed(2);
-            document.getElementById('status-display').innerHTML = `
-                <span style="color:var(--blue); font-weight:bold;">全程: ${totalKM}km</span> 
-                &nbsp;&nbsp;&nbsp; 
-                <span style="color:var(--red); font-weight:bold;">路费: ￥${totalTolls}</span>
-            `;
-            map.setFitView();
-        } else { alert("获取失败"); }
-    });
-}
-
-function chPax(n) { 
-    paxCount = n; 
-    document.getElementById('p3').className=n==3?'opt-btn active':'opt-btn'; 
-    document.getElementById('p4').className=n==4?'opt-btn active':'opt-btn'; 
-    document.getElementById('item-v4').style.display=n==3?'none':'flex'; 
-}
-
-function chMode(m) { 
-    modeType = m; 
-    document.getElementById('mS').className=m=='seg'?'opt-btn active':'opt-btn'; 
-    document.getElementById('mA').className=m=='avg'?'opt-btn active':'opt-btn'; 
-}
-
-function finalCalc() {
-    if(!totalKM) return alert("请先获取过路费数据！");
-    const rate = totalTolls / totalKM;
-    let html = ``;
-    if(modeType === 'avg') {
-        const per = totalTolls / paxCount;
-        for(let i=1; i<=paxCount; i++) html += `<div class="res-line"><span>客 ${i} 分摊</span><b>${per.toFixed(2)} 元</b></div>`;
-    } else {
-        let items = [];
-        for(let i=1; i<=paxCount; i++) {
-            let v = parseFloat(document.getElementById(`v${i}`).value) || 0;
-            items.push({ id: i, dist: Math.min(v, totalKM) });
-        }
-        let sorted = [...items].sort((a,b) => a.dist - b.dist);
-        let resMap = {}; items.forEach(x => resMap[x.id] = 0);
-        let last = 0, count = paxCount;
-        for (let i = 0; i < sorted.length; i++) {
-            let seg = sorted[i].dist - last;
-            if (seg > 0) {
-                let cost = (seg * rate) / count;
-                sorted.slice(i).forEach(x => resMap[x.id] += cost);
-            }
-            last = sorted[i].dist;
-            count--;
-        }
-        items.forEach(x => html += `<div class="res-line"><span>客 ${x.id} (${x.dist}km)</span><b>${resMap[x.id].toFixed(2)} 元</b></div>`);
+      requestAnimationFrame(updateClock);
     }
-    document.getElementById('final-res').innerHTML = html;
-}
-</script>
+
+    updateClock();
+  </script>
 </body>
 </html>
